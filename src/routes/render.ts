@@ -1,6 +1,6 @@
 import type { SiteConfig } from "../config/config";
 import { scanRepos } from "../scan/scan";
-import { openRepository } from "../git/binding/repository";
+import { openRepository } from "../git";
 import { notFound } from "../errors";
 import { buildRepolistVM } from "./repolist";
 import { buildSummaryVM } from "./summary";
