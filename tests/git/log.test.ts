@@ -36,3 +36,21 @@ test("log() paginates with offset/limit and reports hasMore", () => {
     repo.free();
   }
 });
+
+test("log() ref= resolves branch shorthand, lightweight tag, and annotated tag", () => {
+  const repo = openRepository(fixture.path);
+  try {
+    // Branch shorthand: main has all 3 commits
+    expect(repo.log({ ref: "main", limit: 10 }).commits).toHaveLength(3);
+
+    // Lightweight tag v1.0 points at the "Add a.txt" commit — walk from there
+    expect(
+      repo.log({ ref: "v1.0", limit: 10 }).commits.map((c) => c.summary)
+    ).toEqual(["Add a.txt", "Add README"]);
+
+    // Annotated tag v2.0 peels to the "Add b.txt" commit — walk from there
+    expect(repo.log({ ref: "v2.0", limit: 10 }).commits).toHaveLength(3);
+  } finally {
+    repo.free();
+  }
+});

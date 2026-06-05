@@ -42,6 +42,9 @@ const SYMBOLS = {
   git_commit_committer: { args: [FFIType.ptr], returns: FFIType.ptr },
   git_commit_parentcount: { args: [FFIType.ptr], returns: FFIType.u32 },
   git_commit_parent_id: { args: [FFIType.ptr, FFIType.u32], returns: FFIType.ptr },
+  git_revwalk_push: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
+  git_revparse_single: { args: [FFIType.ptr, FFIType.ptr, FFIType.cstring], returns: FFIType.i32 },
+  git_object_peel: { args: [FFIType.ptr, FFIType.ptr, FFIType.i32], returns: FFIType.i32 },
 } as const satisfies Record<string, FFIFunction>;
 
 // Build the ordered candidate list: env override first, then unversioned name,

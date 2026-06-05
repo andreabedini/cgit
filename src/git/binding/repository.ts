@@ -87,10 +87,9 @@ class Repo implements Repository {
     check(lib.git_revwalk_new(toPtr(ptr(walkSlot)), toPtr(this.handle)));
     const walk = readPtr(walkSlot);
     try {
-      lib.git_revwalk_sorting(toPtr(walk), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+      check(lib.git_revwalk_sorting(toPtr(walk), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME));
       if (opts.ref) {
-        const full = opts.ref.startsWith("refs/") ? opts.ref : `refs/heads/${opts.ref}`;
-        check(lib.git_revwalk_push_ref(toPtr(walk), cstr(full)));
+        this.pushRef(walk, opts.ref);
       } else {
         check(lib.git_revwalk_push_head(toPtr(walk)));
       }
@@ -110,6 +109,28 @@ class Repo implements Repository {
       return { commits, hasMore };
     } finally {
       lib.git_revwalk_free(toPtr(walk));
+    }
+  }
+
+  // Resolve a ref spec (branch/tag shorthand, full ref name, or oid) to a commit
+  // and push it onto the walk. revparse + peel handles annotated tags correctly
+  // (peeling the tag object down to its commit).
+  private pushRef(walk: number, ref: string): void {
+    const objSlot = ptrSlot();
+    check(lib.git_revparse_single(toPtr(ptr(objSlot)), toPtr(this.handle), cstr(ref)));
+    const obj = readPtr(objSlot);
+    try {
+      const commitSlot = ptrSlot();
+      check(lib.git_object_peel(toPtr(ptr(commitSlot)), toPtr(obj), GIT_OBJECT_COMMIT));
+      const commitObj = readPtr(commitSlot);
+      try {
+        const oidPtr = Number(lib.git_object_id(toPtr(commitObj)));
+        check(lib.git_revwalk_push(toPtr(walk), toPtr(oidPtr)));
+      } finally {
+        lib.git_object_free(toPtr(commitObj));
+      }
+    } finally {
+      lib.git_object_free(toPtr(obj));
     }
   }
 
