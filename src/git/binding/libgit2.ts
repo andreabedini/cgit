@@ -17,6 +17,16 @@ const SYMBOLS = {
   git_reference_shorthand: { args: [FFIType.ptr], returns: FFIType.cstring },
   git_reference_free: { args: [FFIType.ptr], returns: FFIType.void },
   git_error_last: { args: [], returns: FFIType.ptr },
+  git_reference_iterator_new: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
+  git_reference_next: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
+  git_reference_iterator_free: { args: [FFIType.ptr], returns: FFIType.void },
+  git_reference_name: { args: [FFIType.ptr], returns: FFIType.cstring },
+  git_reference_is_branch: { args: [FFIType.ptr], returns: FFIType.i32 },
+  git_reference_is_tag: { args: [FFIType.ptr], returns: FFIType.i32 },
+  git_reference_peel: { args: [FFIType.ptr, FFIType.ptr, FFIType.i32], returns: FFIType.i32 },
+  git_object_id: { args: [FFIType.ptr], returns: FFIType.ptr },
+  git_object_free: { args: [FFIType.ptr], returns: FFIType.void },
+  git_oid_tostr_s: { args: [FFIType.ptr], returns: FFIType.cstring },
 } as const satisfies Record<string, FFIFunction>;
 
 // Build the ordered candidate list: env override first, then unversioned name,

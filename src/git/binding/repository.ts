@@ -22,7 +22,54 @@ class Repo implements Repository {
     }
   }
 
-  references(): Reference[] { throw new Error("not implemented yet"); }
+  references(): Reference[] {
+    const iterSlot = ptrSlot();
+    check(lib.git_reference_iterator_new(toPtr(ptr(iterSlot)), toPtr(this.handle)));
+    const iter = readPtr(iterSlot);
+    const refs: Reference[] = [];
+    try {
+      const refSlot = ptrSlot();
+      while (true) {
+        const rc = lib.git_reference_next(toPtr(ptr(refSlot)), toPtr(iter));
+        if (rc === -31 /* GIT_ITEROVER */) break;
+        check(rc);
+        const refPtr = readPtr(refSlot);
+        try {
+          const fullName = String(lib.git_reference_name(toPtr(refPtr)));
+          const isBranch = lib.git_reference_is_branch(toPtr(refPtr)) === 1;
+          const isTag = lib.git_reference_is_tag(toPtr(refPtr)) === 1;
+          if (!isBranch && !isTag) continue; // skip HEAD, notes, etc.
+          const name = fullName.replace(/^refs\/(heads|tags)\//, "");
+          const commitOid = this.peelToCommitOid(refPtr);
+          refs.push({
+            name,
+            fullName,
+            kind: isBranch ? "branch" : "tag",
+            targetOid: commitOid,
+            commitOid,
+          });
+        } finally {
+          lib.git_reference_free(toPtr(refPtr));
+        }
+      }
+    } finally {
+      lib.git_reference_iterator_free(toPtr(iter));
+    }
+    return refs;
+  }
+
+  private peelToCommitOid(refPtr: number): string {
+    const objSlot = ptrSlot();
+    check(lib.git_reference_peel(toPtr(ptr(objSlot)), toPtr(refPtr), 1 /* GIT_OBJECT_COMMIT */));
+    const obj = readPtr(objSlot);
+    try {
+      const oidPtr = Number(lib.git_object_id(toPtr(obj)));
+      return String(lib.git_oid_tostr_s(toPtr(oidPtr)));
+    } finally {
+      lib.git_object_free(toPtr(obj));
+    }
+  }
+
   log(_opts: LogOptions): LogPage { throw new Error("not implemented yet"); }
   readFileAtRef(_ref: string, _path: string): Uint8Array | null {
     throw new Error("not implemented yet");
