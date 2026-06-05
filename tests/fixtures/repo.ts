@@ -33,30 +33,35 @@ async function run(cwd: string, ...args: string[]): Promise<void> {
 
 export async function createFixtureRepo(): Promise<FixtureRepo> {
   const root = mkdtempSync(join(tmpdir(), "cgit-ts-fixture-"));
-  const work = join(root, "work");
-  const bare = join(root, "repo.git");
+  try {
+    const work = join(root, "work");
+    const bare = join(root, "repo.git");
 
-  await run(root, "init", "-q", "-b", "main", work);
-  await Bun.write(join(work, "README.md"), "# Fixture\n\nHello world.\n");
-  await run(work, "add", "README.md");
-  await run(work, "commit", "-q", "-m", "Add README");
-  await Bun.write(join(work, "a.txt"), "first\n");
-  await run(work, "add", "a.txt");
-  await run(work, "commit", "-q", "-m", "Add a.txt");
-  await run(work, "tag", "v1.0");
-  await Bun.write(join(work, "b.txt"), "second\n");
-  await run(work, "add", "b.txt");
-  await run(work, "commit", "-q", "-m", "Add b.txt");
+    await run(root, "init", "-q", "-b", "main", work);
+    await Bun.write(join(work, "README.md"), "# Fixture\n\nHello world.\n");
+    await run(work, "add", "README.md");
+    await run(work, "commit", "-q", "-m", "Add README");
+    await Bun.write(join(work, "a.txt"), "first\n");
+    await run(work, "add", "a.txt");
+    await run(work, "commit", "-q", "-m", "Add a.txt");
+    await run(work, "tag", "v1.0");
+    await Bun.write(join(work, "b.txt"), "second\n");
+    await run(work, "add", "b.txt");
+    await run(work, "commit", "-q", "-m", "Add b.txt");
 
-  // Publish to a bare repo (what the server actually serves).
-  await run(root, "clone", "-q", "--bare", work, bare);
+    // Publish to a bare repo (what the server actually serves).
+    await run(root, "clone", "-q", "--bare", work, bare);
 
-  const cleanup = () => rmSync(root, { recursive: true, force: true });
-  return {
-    path: bare,
-    commitSubjects: ["Add b.txt", "Add a.txt", "Add README"],
-    branches: ["main"],
-    tags: ["v1.0"],
-    cleanup,
-  };
+    const cleanup = () => rmSync(root, { recursive: true, force: true });
+    return {
+      path: bare,
+      commitSubjects: ["Add b.txt", "Add a.txt", "Add README"],
+      branches: ["main"],
+      tags: ["v1.0"],
+      cleanup,
+    };
+  } catch (err) {
+    rmSync(root, { recursive: true, force: true });
+    throw err;
+  }
 }
