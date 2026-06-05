@@ -170,8 +170,21 @@ class Repo implements Repository {
     };
   }
 
-  readFileAtRef(_ref: string, _path: string): Uint8Array | null {
-    throw new Error("not implemented yet");
+  readFileAtRef(ref: string, path: string): Uint8Array | null {
+    const spec = `${ref}:${path}`;
+    const slot = ptrSlot();
+    const rc = lib.git_revparse_single(toPtr(ptr(slot)), toPtr(this.handle), cstr(spec));
+    if (rc === -3 /* GIT_ENOTFOUND */) return null;
+    check(rc);
+    const blob = readPtr(slot);
+    try {
+      const size = Number(lib.git_blob_rawsize(toPtr(blob)));
+      const dataPtr = Number(lib.git_blob_rawcontent(toPtr(blob)));
+      // Copy the bytes out of libgit2-owned memory before freeing the blob.
+      return new Uint8Array(toArrayBuffer(toPtr(dataPtr), 0, size)).slice();
+    } finally {
+      lib.git_blob_free(toPtr(blob));
+    }
   }
 
   free(): void {

@@ -45,6 +45,9 @@ const SYMBOLS = {
   git_revwalk_push: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
   git_revparse_single: { args: [FFIType.ptr, FFIType.ptr, FFIType.cstring], returns: FFIType.i32 },
   git_object_peel: { args: [FFIType.ptr, FFIType.ptr, FFIType.i32], returns: FFIType.i32 },
+  git_blob_rawcontent: { args: [FFIType.ptr], returns: FFIType.ptr },
+  git_blob_rawsize: { args: [FFIType.ptr], returns: FFIType.u64 },
+  git_blob_free: { args: [FFIType.ptr], returns: FFIType.void },
 } as const satisfies Record<string, FFIFunction>;
 
 // Build the ordered candidate list: env override first, then unversioned name,
