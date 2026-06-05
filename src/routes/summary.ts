@@ -13,13 +13,15 @@ export function buildSummaryVM(
   recentCommits: Commit[],
   about: string | undefined,
   cloneUrls: string[],
+  maxBranches: number,
+  maxTags: number,
   now: Date = new Date(),
 ): SummaryViewModel {
   const decorations = buildDecorationMap(refs);
   return {
     repo,
-    branches: refs.filter((r) => r.kind === "branch").map(refToVM),
-    tags: refs.filter((r) => r.kind === "tag").map(refToVM),
+    branches: refs.filter((r) => r.kind === "branch").slice(0, maxBranches).map(refToVM),
+    tags: refs.filter((r) => r.kind === "tag").slice(0, maxTags).map(refToVM),
     recentCommits: recentCommits.map((c) => commitToLogRow(c, decorations, now)),
     cloneUrls,
     about,

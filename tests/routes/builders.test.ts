@@ -38,6 +38,7 @@ test("buildSummaryVM splits branches/tags, builds rows and clone urls", () => {
     [commit("a".repeat(40), "Add a")],
     "# readme",
     ["https://h/alpha.git"],
+    10, 10,
     now,
   );
   expect(vm.branches.map((b) => b.name)).toEqual(["main"]);
@@ -46,6 +47,29 @@ test("buildSummaryVM splits branches/tags, builds rows and clone urls", () => {
   expect(vm.recentCommits[0].decorations.map((d) => d.name).sort()).toEqual(["main", "v1.0"]);
   expect(vm.about).toBe("# readme");
   expect(vm.cloneUrls).toEqual(["https://h/alpha.git"]);
+});
+
+test("buildSummaryVM caps branches/tags but decorations come from ALL refs", () => {
+  const oid = "a".repeat(40);
+  const refs: Reference[] = [
+    { name: "main", fullName: "refs/heads/main", kind: "branch", targetOid: oid, commitOid: oid },
+    { name: "feature", fullName: "refs/heads/feature", kind: "branch", targetOid: oid, commitOid: oid },
+    { name: "v1.0", fullName: "refs/tags/v1.0", kind: "tag", targetOid: oid, commitOid: oid },
+    { name: "v2.0", fullName: "refs/tags/v2.0", kind: "tag", targetOid: oid, commitOid: oid },
+  ];
+  const vm = buildSummaryVM(
+    { name: "alpha", description: "d" },
+    refs,
+    [commit(oid, "Add a")],
+    undefined,
+    [],
+    1, 1,
+    now,
+  );
+  expect(vm.branches.length).toBe(1);
+  expect(vm.tags.length).toBe(1);
+  // Decorations are built from ALL refs, so the capped-out branch still appears.
+  expect(vm.recentCommits[0].decorations.length).toBe(4);
 });
 
 test("buildLogVM builds rows, decorations and pager", () => {

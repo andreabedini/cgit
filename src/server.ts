@@ -27,6 +27,7 @@ export function createApp(cfg: SiteConfig) {
         const ofs = Math.max(0, Number(c.req.query("ofs") ?? 0) | 0);
         return c.html(LogPage({ vm: logVM(cfg, p, ref, ofs) }));
       }
+      // Unknown page names fall through to the summary page (matches cgit).
       return c.html(SummaryPage({ vm: summaryVM(cfg, p) }));
     } catch (err) {
       const status = statusForError(err);

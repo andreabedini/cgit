@@ -14,7 +14,8 @@ function findRepo(cfg: SiteConfig, name: string) {
 }
 
 export function repolistVM(cfg: SiteConfig) {
-  const repos = scanRepos(cfg.scanPath);
+  // Numbered pagination UI is a later milestone; cap to the first page for now.
+  const repos = scanRepos(cfg.scanPath).slice(0, cfg.repolistPageSize);
   const lastCommit = new Map<string, Date>();
   for (const r of repos) {
     const repo = openRepository(r.path);
@@ -37,7 +38,7 @@ export function summaryVM(cfg: SiteConfig, name: string) {
     const about = readme ? new TextDecoder().decode(readme) : undefined;
     const meta: RepoMeta = { name: disc.name, description: disc.description, owner: disc.owner };
     const cloneUrls = cfg.cloneUrlBase ? [`${cfg.cloneUrlBase.replace(/\/$/, "")}/${disc.name}.git`] : [];
-    return buildSummaryVM(meta, refs, recent, about, cloneUrls);
+    return buildSummaryVM(meta, refs, recent, about, cloneUrls, cfg.summaryBranches, cfg.summaryTags);
   } finally { repo.free(); }
 }
 
