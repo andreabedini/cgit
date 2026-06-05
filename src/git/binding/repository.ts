@@ -29,7 +29,7 @@ class Repo implements Repository {
   }
 
   free(): void {
-    if (this.handle) {
+    if (this.handle) { // 0 = already freed (libgit2 uses 0 as the null-pointer sentinel)
       lib.git_repository_free(toPtr(this.handle));
       this.handle = 0;
     }

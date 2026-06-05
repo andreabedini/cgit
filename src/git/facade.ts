@@ -40,6 +40,7 @@ export interface Repository {
   headRef(): string;
   references(): Reference[];
   log(opts: LogOptions): LogPage;
+  /** Returns null if the path (or ref) was not found in the tree. */
   readFileAtRef(ref: string, path: string): Uint8Array | null;
   free(): void;
 }

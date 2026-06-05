@@ -1,6 +1,7 @@
 import { test, expect, beforeAll, afterAll } from "bun:test";
 import { createFixtureRepo, type FixtureRepo } from "../fixtures/repo";
 import { openRepository } from "../../src/git/binding/repository";
+import { GitError } from "../../src/git/binding/libgit2";
 
 let fixture: FixtureRepo;
 beforeAll(async () => { fixture = await createFixtureRepo(); });
@@ -17,5 +18,5 @@ test("openRepository + headRef", () => {
 });
 
 test("openRepository throws NotFound for a non-repo path", () => {
-  expect(() => openRepository("/definitely/not/a/repo")).toThrow();
+  expect(() => openRepository("/definitely/not/a/repo")).toThrow(GitError);
 });
