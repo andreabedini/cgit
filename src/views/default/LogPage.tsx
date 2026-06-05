@@ -3,7 +3,7 @@ import type { LogViewModel } from "../../viewmodels";
 
 export function LogPage(props: { vm: LogViewModel }) {
   const { vm } = props;
-  const base = `/?p=${vm.repo.name}&page=log&h=${vm.ref}`;
+  const base = `/${vm.repo.name}/log/?h=${vm.ref}`;
   const prevOfs = Math.max(0, vm.pager.offset - vm.pager.limit);
   const nextOfs = vm.pager.offset + vm.pager.limit;
   return (

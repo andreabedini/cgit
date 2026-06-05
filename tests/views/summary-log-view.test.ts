@@ -33,7 +33,7 @@ test("LogPage renders rows, decorations and pager links", () => {
   const html = LogPage({ vm }).toString();
   expect(html).toContain("Add a");
   expect(html).toContain("main");
-  expect(html).toContain("page=log");
+  expect(html).toContain("/alpha/log/");
   expect(html).toContain("ofs=0");
   expect(html).toContain("ofs=100");
 });

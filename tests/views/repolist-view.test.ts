@@ -18,5 +18,5 @@ test("RepolistPage renders rows and escapes descriptions", () => {
   expect(html).toContain("2 days ago");
   expect(html).toContain("first &lt;repo&gt;"); // escaped
   expect(html).not.toContain("first <repo>");
-  expect(html).toContain('href="/?p=alpha&amp;page=summary"');
+  expect(html).toContain('href="/alpha/"');
 });

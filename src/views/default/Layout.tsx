@@ -13,8 +13,8 @@ export function Layout(props: PropsWithChildren<{ title: string; repoNav?: { nam
           <a href="/">cgit-ts</a>
           {props.repoNav ? (
             <nav class="repo-nav">
-              <a href={`/?p=${props.repoNav.name}&page=summary`}>summary</a>
-              <a href={`/?p=${props.repoNav.name}&page=log`}>log</a>
+              <a href={`/${props.repoNav.name}/`}>summary</a>
+              <a href={`/${props.repoNav.name}/log/`}>log</a>
             </nav>
           ) : null}
         </header>

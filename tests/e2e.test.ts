@@ -24,11 +24,11 @@ afterAll(() => { fixture?.cleanup(); rmSync(root, { recursive: true, force: true
 test("GET / lists the repo", async () => {
   const html = await (await app.request("/")).text();
   expect(html).toContain("project");
-  expect(html).toContain('href="/?p=project&amp;page=summary"');
+  expect(html).toContain('href="/project/"');
 });
 
-test("GET /?p=project&page=summary shows refs and about", async () => {
-  const res = await app.request("/?p=project&page=summary");
+test("GET /project/ shows refs and about", async () => {
+  const res = await app.request("/project/");
   expect(res.status).toBe(200);
   const html = await res.text();
   expect(html).toContain("main");
@@ -36,15 +36,27 @@ test("GET /?p=project&page=summary shows refs and about", async () => {
   expect(html).toContain("# Fixture"); // README rendered as plain text
 });
 
-test("GET /?p=project&page=log paginates", async () => {
-  const html = await (await app.request("/?p=project&page=log")).text();
+test("GET /project/log/ paginates", async () => {
+  const html = await (await app.request("/project/log/")).text();
   expect(html).toContain("Add b.txt");
   expect(html).toContain("older"); // hasNext pager (page size 2, 3 commits)
 });
 
-test("GET /?p=missing&page=summary 404s", async () => {
-  const res = await app.request("/?p=missing&page=summary");
+test("GET /missing/ 404s", async () => {
+  const res = await app.request("/missing/");
   expect(res.status).toBe(404);
+});
+
+test("GET /project redirects to the trailing-slash form", async () => {
+  const res = await app.request("/project");
+  expect(res.status).toBe(301);
+  expect(res.headers.get("location")).toBe("/project/");
+});
+
+test("GET /project/log redirects to the trailing-slash form", async () => {
+  const res = await app.request("/project/log");
+  expect(res.status).toBe(301);
+  expect(res.headers.get("location")).toBe("/project/log/");
 });
 
 test("GET /cgit.css serves the stylesheet", async () => {
