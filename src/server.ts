@@ -14,6 +14,7 @@ export function createApp(cfg: SiteConfig) {
   // Static / infrastructure routes are registered before the `/:repo` param
   // routes so a request like `/healthz` matches here and never falls through.
   app.get("/healthz", (c) => c.text("ok"));
+  app.get("/terminal.min.css", serveStatic({ path: "./src/public/terminal.min.css" }));
   app.get("/cgit.css", serveStatic({ path: "./src/public/cgit.css" }));
 
   app.get("/", (c) => c.html(RepolistPage({ vm: repolistVM(cfg) })));

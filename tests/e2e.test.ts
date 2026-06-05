@@ -64,3 +64,10 @@ test("GET /cgit.css serves the stylesheet", async () => {
   expect(res.status).toBe(200);
   expect(res.headers.get("content-type")).toContain("text/css");
 });
+
+test("GET /terminal.min.css serves the vendored Terminal.css", async () => {
+  const res = await app.request("/terminal.min.css");
+  expect(res.status).toBe(200);
+  expect(res.headers.get("content-type")).toContain("text/css");
+  expect(await res.text()).toContain("terminal-nav");
+});

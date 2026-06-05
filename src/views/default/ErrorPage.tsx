@@ -3,9 +3,9 @@ import { Layout } from "./Layout";
 export function ErrorPage(props: { status: number; message: string }) {
   return (
     <Layout title={`Error ${props.status}`}>
-      <div class="error">
-        <h2>{props.status}</h2>
-        <p>{props.message}</p>
+      <h2>Error {props.status}</h2>
+      <div class="terminal-alert terminal-alert-error" role="alert">
+        {props.message}
       </div>
     </Layout>
   );

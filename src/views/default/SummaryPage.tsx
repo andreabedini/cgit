@@ -29,7 +29,7 @@ function LogRows(props: { rows: LogRow[] }) {
 export function SummaryPage(props: { vm: SummaryViewModel }) {
   const { vm } = props;
   return (
-    <Layout title={vm.repo.name} repoNav={{ name: vm.repo.name }}>
+    <Layout title={vm.repo.name} repoNav={{ name: vm.repo.name, active: "summary" }}>
       <h2>{vm.repo.name}</h2>
       {vm.repo.description ? <p>{vm.repo.description}</p> : null}
       <RefList title="Branches" refs={vm.branches} />

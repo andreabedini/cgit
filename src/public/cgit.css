@@ -1,11 +1,56 @@
-body { font-family: sans-serif; margin: 0; color: #333; }
-.site-header { background: #ccc; padding: 0.5em 1em; }
-.site-header a { margin-right: 1em; }
-main { padding: 1em; }
-table { border-collapse: collapse; width: 100%; }
-th, td { text-align: left; padding: 0.25em 0.75em; border-bottom: 1px solid #eee; }
-.ref { font-size: 0.8em; padding: 0 0.4em; border-radius: 3px; margin-left: 0.3em; }
-.ref.branch { background: #d0f0d0; }
-.ref.tag { background: #f0e0a0; }
-.site-footer { padding: 1em; color: #999; font-size: 0.8em; }
-.error h2 { color: #b00; }
+/* cgit-ts overlay on top of terminal.css.
+   Loaded after terminal.min.css; only adds the auto dark theme and a few
+   cgit-specific affordances (ref badges, log table layout). */
+
+/* Auto dark theme: flip Terminal.css's CSS variables when the visitor's OS
+   prefers a dark color scheme. Terminal.css is fully variable-driven, so this
+   is all that's needed. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: #222225;
+    --font-color: #e8e9ed;
+    --invert-font-color: #222225;
+    --secondary-color: #a3abba;
+    --tertiary-color: #a3abba;
+    --primary-color: #62c4ff;
+    --error-color: #ff3c74;
+    --progress-bar-background: #3f3f44;
+    --progress-bar-fill: #62c4ff;
+    --code-bg-color: #3f3f44;
+    --block-background-color: #3f3f44;
+  }
+}
+
+/* Log / repolist tables read better left-aligned and tight. */
+table.log td,
+table.repolist td {
+  vertical-align: top;
+}
+table.log td:first-child,
+table.repolist td:nth-child(4) {
+  white-space: nowrap;
+  color: var(--secondary-color);
+}
+
+/* Inline ref badges on log rows (branch/tag decorations). */
+.ref {
+  font-size: 0.8em;
+  padding: 0 0.4em;
+  margin-left: 0.4em;
+  border: 1px solid var(--secondary-color);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.ref.branch {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+.ref.tag {
+  border-color: var(--secondary-color);
+  color: var(--secondary-color);
+}
+
+/* The About blob is preformatted README text; let it wrap. */
+pre.about {
+  white-space: pre-wrap;
+}
