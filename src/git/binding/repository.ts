@@ -6,6 +6,8 @@ import {
 // (oidSlot/cstr/read/toArrayBuffer/CString/Commit/Signature are used by methods
 //  added in Tasks 5-7; importing them now keeps repository.ts stable across tasks.)
 
+const GIT_OBJECT_COMMIT = 1;
+
 class Repo implements Repository {
   constructor(readonly path: string, private handle: number) {}
 
@@ -41,11 +43,12 @@ class Repo implements Repository {
           if (!isBranch && !isTag) continue; // skip HEAD, notes, etc.
           const name = fullName.replace(/^refs\/(heads|tags)\//, "");
           const commitOid = this.peelToCommitOid(refPtr);
+          const targetOid = this.directTargetOid(refPtr) ?? commitOid;
           refs.push({
             name,
             fullName,
             kind: isBranch ? "branch" : "tag",
-            targetOid: commitOid,
+            targetOid,
             commitOid,
           });
         } finally {
@@ -60,7 +63,7 @@ class Repo implements Repository {
 
   private peelToCommitOid(refPtr: number): string {
     const objSlot = ptrSlot();
-    check(lib.git_reference_peel(toPtr(ptr(objSlot)), toPtr(refPtr), 1 /* GIT_OBJECT_COMMIT */));
+    check(lib.git_reference_peel(toPtr(ptr(objSlot)), toPtr(refPtr), GIT_OBJECT_COMMIT));
     const obj = readPtr(objSlot);
     try {
       const oidPtr = Number(lib.git_object_id(toPtr(obj)));
@@ -68,6 +71,11 @@ class Repo implements Repository {
     } finally {
       lib.git_object_free(toPtr(obj));
     }
+  }
+
+  private directTargetOid(refPtr: number): string | null {
+    const oidPtr = Number(lib.git_reference_target(toPtr(refPtr)));
+    return oidPtr ? String(lib.git_oid_tostr_s(toPtr(oidPtr))) : null;
   }
 
   log(_opts: LogOptions): LogPage { throw new Error("not implemented yet"); }

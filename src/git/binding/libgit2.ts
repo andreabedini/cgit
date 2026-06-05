@@ -27,6 +27,7 @@ const SYMBOLS = {
   git_object_id: { args: [FFIType.ptr], returns: FFIType.ptr },
   git_object_free: { args: [FFIType.ptr], returns: FFIType.void },
   git_oid_tostr_s: { args: [FFIType.ptr], returns: FFIType.cstring },
+  git_reference_target: { args: [FFIType.ptr], returns: FFIType.ptr },
 } as const satisfies Record<string, FFIFunction>;
 
 // Build the ordered candidate list: env override first, then unversioned name,

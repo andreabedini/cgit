@@ -48,6 +48,7 @@ export async function createFixtureRepo(): Promise<FixtureRepo> {
     await Bun.write(join(work, "b.txt"), "second\n");
     await run(work, "add", "b.txt");
     await run(work, "commit", "-q", "-m", "Add b.txt");
+    await run(work, "tag", "-a", "-m", "Release 2.0", "v2.0");
 
     // Publish to a bare repo (what the server actually serves).
     await run(root, "clone", "-q", "--bare", work, bare);
@@ -57,7 +58,7 @@ export async function createFixtureRepo(): Promise<FixtureRepo> {
       path: bare,
       commitSubjects: ["Add b.txt", "Add a.txt", "Add README"],
       branches: ["main"],
-      tags: ["v1.0"],
+      tags: ["v1.0", "v2.0"],
       cleanup,
     };
   } catch (err) {
