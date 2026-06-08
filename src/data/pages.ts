@@ -2,9 +2,9 @@ import type { SiteConfig } from "../config/config";
 import { scanRepos } from "../scan/scan";
 import { openRepository } from "../git";
 import { notFound } from "../errors";
-import { buildRepolistVM } from "./repolist";
-import { buildSummaryVM } from "./summary";
-import { buildLogVM } from "./log";
+import { buildRepolistVM } from "../routes/repolist";
+import { buildSummaryVM } from "../routes/summary";
+import { buildLogVM } from "../routes/log";
 import type { RepoMeta } from "../viewmodels";
 
 function findRepo(cfg: SiteConfig, name: string) {

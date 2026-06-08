@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { appendTrailingSlash } from 'hono/trailing-slash'
 import type { SiteConfig } from "../config/config";
-import { summaryVM, logVM } from "../routes/render";
+import { summaryVM, logVM } from "../data/pages";
 import { SummaryPage } from "../views/default/SummaryPage";
 import { LogPage } from "../views/default/LogPage";
 
