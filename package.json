@@ -1,10 +1,10 @@
 {
   "name": "cgit-ts",
-  "module": "src/server.ts",
+  "module": "src/server.tsx",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run src/server.ts",
+    "dev": "bun run src/server.tsx",
     "test": "bun test"
   },
   "dependencies": {

@@ -1,17 +1,24 @@
-import { Layout } from "./Layout";
 import type { RepolistViewModel } from "../../viewmodels";
 
 export function RepolistPage(props: { vm: RepolistViewModel }) {
   return (
-    <Layout title="Repositories">
+    <>
+      <title>Repositories</title>
       <table class="repolist">
         <thead>
-          <tr><th>Name</th><th>Description</th><th>Owner</th><th>Idle</th></tr>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Owner</th>
+            <th>Idle</th>
+          </tr>
         </thead>
         <tbody>
           {props.vm.repos.map((r) => (
             <tr>
-              <td><a href={`/${r.name}/`}>{r.name}</a></td>
+              <td>
+                <a href={`/${r.name}/`}>{r.name}</a>
+              </td>
               <td>{r.description ?? ""}</td>
               <td>{r.owner ?? ""}</td>
               <td>{r.lastCommitAge ?? ""}</td>
@@ -19,6 +26,6 @@ export function RepolistPage(props: { vm: RepolistViewModel }) {
           ))}
         </tbody>
       </table>
-    </Layout>
+    </>
   );
 }

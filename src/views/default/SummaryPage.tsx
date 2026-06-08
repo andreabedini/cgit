@@ -1,11 +1,17 @@
-import { Layout } from "./Layout";
+import { RepoContext } from "./RepoContext";
 import type { SummaryViewModel, RefVM, LogRow } from "../../viewmodels";
 
 function RefList(props: { title: string; refs: RefVM[] }) {
   return (
     <section>
       <h3>{props.title}</h3>
-      <ul>{props.refs.map((r) => <li>{r.name} <code>{r.abbrevOid}</code></li>)}</ul>
+      <ul>
+        {props.refs.map((r) => (
+          <li>
+            {r.name} <code>{r.abbrevOid}</code>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -29,7 +35,8 @@ function LogRows(props: { rows: LogRow[] }) {
 export function SummaryPage(props: { vm: SummaryViewModel }) {
   const { vm } = props;
   return (
-    <Layout title={vm.repo.name} repoNav={{ name: vm.repo.name, active: "summary" }}>
+    <RepoContext.Provider value={{ name: vm.repo.name }}>
+      <title>{vm.repo.name}</title>
       <h2>{vm.repo.name}</h2>
       {vm.repo.description ? <p>{vm.repo.description}</p> : null}
       <RefList title="Branches" refs={vm.branches} />
@@ -41,7 +48,13 @@ export function SummaryPage(props: { vm: SummaryViewModel }) {
       {vm.cloneUrls.length ? (
         <section>
           <h3>Clone</h3>
-          <ul>{vm.cloneUrls.map((u) => <li><code>{u}</code></li>)}</ul>
+          <ul>
+            {vm.cloneUrls.map((u) => (
+              <li>
+                <code>{u}</code>
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
       {vm.about ? (
@@ -50,6 +63,6 @@ export function SummaryPage(props: { vm: SummaryViewModel }) {
           <pre class="about">{vm.about}</pre>
         </section>
       ) : null}
-    </Layout>
+    </RepoContext.Provider>
   );
 }
