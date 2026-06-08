@@ -35,34 +35,36 @@ function LogRows(props: { rows: LogRow[] }) {
 export function SummaryPage(props: { vm: SummaryViewModel }) {
   const { vm } = props;
   return (
-    <RepoContext.Provider value={{ name: vm.repo.name }}>
+    <>
       <title>{vm.repo.name}</title>
-      <h2>{vm.repo.name}</h2>
-      {vm.repo.description ? <p>{vm.repo.description}</p> : null}
-      <RefList title="Branches" refs={vm.branches} />
-      <RefList title="Tags" refs={vm.tags} />
-      <section>
-        <h3>Recent commits</h3>
-        <LogRows rows={vm.recentCommits} />
-      </section>
-      {vm.cloneUrls.length ? (
+      <RepoContext.Provider value={{ name: vm.repo.name }}>
+        <h2>{vm.repo.name}</h2>
+        {vm.repo.description ? <p>{vm.repo.description}</p> : null}
+        <RefList title="Branches" refs={vm.branches} />
+        <RefList title="Tags" refs={vm.tags} />
         <section>
-          <h3>Clone</h3>
-          <ul>
-            {vm.cloneUrls.map((u) => (
-              <li>
-                <code>{u}</code>
-              </li>
-            ))}
-          </ul>
+          <h3>Recent commits</h3>
+          <LogRows rows={vm.recentCommits} />
         </section>
-      ) : null}
-      {vm.about ? (
-        <section id="summary">
-          <h3>About</h3>
-          <pre class="about">{vm.about}</pre>
-        </section>
-      ) : null}
-    </RepoContext.Provider>
+        {vm.cloneUrls.length ? (
+          <section>
+            <h3>Clone</h3>
+            <ul>
+              {vm.cloneUrls.map((u) => (
+                <li>
+                  <code>{u}</code>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+        {vm.about ? (
+          <section id="summary">
+            <h3>About</h3>
+            <pre class="about">{vm.about}</pre>
+          </section>
+        ) : null}
+      </RepoContext.Provider>
+    </>
   );
 }

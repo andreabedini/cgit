@@ -1,8 +1,8 @@
 import { test, expect } from "bun:test";
-import { Hono } from "hono";
+import { Hono, type Handler } from "hono";
 import { renderer } from "../../src/views/default/renderer";
 
-function appWith(body: Parameters<Hono["get"]>[1]) {
+function appWith(body: Handler) {
   const app = new Hono();
   app.use(renderer);
   app.get("/", body);

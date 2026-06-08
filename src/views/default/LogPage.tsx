@@ -25,38 +25,40 @@ function Pager(props: { pager: PagerVM }) {
 export function LogPage(props: { vm: LogViewModel }) {
   const { vm } = props;
   return (
-    <RepoContext.Provider value={{ name: vm.repo.name, ref: vm.ref }}>
+    <>
       <title>{`${vm.repo.name}: log`}</title>
-      <h2>
-        {vm.repo.name}: log ({vm.ref})
-      </h2>
-      <table class="log">
-        <thead>
-          <tr>
-            <th>Age</th>
-            <th>Commit</th>
-            <th>Author</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {vm.rows.map((row) => (
+      <RepoContext.Provider value={{ name: vm.repo.name, ref: vm.ref }}>
+        <h2>
+          {vm.repo.name}: log ({vm.ref})
+        </h2>
+        <table class="log">
+          <thead>
             <tr>
-              <td>{row.ageLabel}</td>
-              <td>
-                <code>{row.abbrevOid}</code> {row.subject}
-              </td>
-              <td>{row.authorName}</td>
-              <td>
-                {row.decorations.map((d) => (
-                  <span class={`ref ${d.kind}`}>{d.name}</span>
-                ))}
-              </td>
+              <th>Age</th>
+              <th>Commit</th>
+              <th>Author</th>
+              <th></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <Pager pager={vm.pager} />
-    </RepoContext.Provider>
+          </thead>
+          <tbody>
+            {vm.rows.map((row) => (
+              <tr>
+                <td>{row.ageLabel}</td>
+                <td>
+                  <code>{row.abbrevOid}</code> {row.subject}
+                </td>
+                <td>{row.authorName}</td>
+                <td>
+                  {row.decorations.map((d) => (
+                    <span class={`ref ${d.kind}`}>{d.name}</span>
+                  ))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Pager pager={vm.pager} />
+      </RepoContext.Provider>
+    </>
   );
 }
