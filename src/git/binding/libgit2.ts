@@ -47,7 +47,6 @@ const SYMBOLS = {
   git_object_peel: { args: [FFIType.ptr, FFIType.ptr, FFIType.i32], returns: FFIType.i32 },
   git_blob_rawcontent: { args: [FFIType.ptr], returns: FFIType.ptr },
   git_blob_rawsize: { args: [FFIType.ptr], returns: FFIType.u64 },
-  git_blob_free: { args: [FFIType.ptr], returns: FFIType.void },
   git_object_type: { args: [FFIType.ptr], returns: FFIType.i32 },
   git_tree_entrycount: { args: [FFIType.ptr], returns: FFIType.u64 },
   git_tree_entry_byindex: { args: [FFIType.ptr, FFIType.u64], returns: FFIType.ptr },

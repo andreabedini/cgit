@@ -203,6 +203,7 @@ class Repo implements Repository {
       const entries: TreeEntry[] = [];
       for (let i = 0; i < count; i++) {
         const entry = Number(lib.git_tree_entry_byindex(toPtr(obj), i));
+        if (!entry) continue; // defensive: byindex returns null only for an out-of-range index
         const name = String(lib.git_tree_entry_name(toPtr(entry)));
         const mode = lib.git_tree_entry_filemode(toPtr(entry));
         const otype = lib.git_tree_entry_type(toPtr(entry));

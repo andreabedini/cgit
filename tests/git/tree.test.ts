@@ -15,6 +15,8 @@ test("tree() lists root entries with types and blob sizes", () => {
     expect(byName["README.md"].type).toBe("blob");
     expect(byName["README.md"].size).toBeGreaterThan(0);
     expect(byName["README.md"].oid).toMatch(/^[0-9a-f]{40}$/);
+    expect(byName["README.md"].mode).toBe(0o100644);
+    expect(byName["src"].mode).toBe(0o040000);
     expect(byName["src"].type).toBe("tree");
     expect(byName["logo.bin"].type).toBe("blob");
   } finally {
@@ -26,6 +28,7 @@ test("tree() lists a subdirectory", () => {
   const repo = openRepository(fixture.path);
   try {
     const entries = repo.tree("main", "src");
+    expect(entries).not.toBeNull();
     expect(entries!.map((e) => e.name)).toContain("hello.txt");
   } finally {
     repo.free();
