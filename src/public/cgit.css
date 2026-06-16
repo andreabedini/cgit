@@ -54,3 +54,39 @@ table.repolist td:nth-child(4) {
 pre.about {
   white-space: pre-wrap;
 }
+
+/* Blob (file) view: one code block with a line-number gutter. Terminal.css
+   styles every <pre> as a bordered, padded card and wraps long lines; override
+   that inside .blob so the source renders as a single compact, aligned listing. */
+.blob {
+  display: flex;
+  gap: 1em;
+  background-color: var(--block-background-color);
+  border: 1px solid var(--secondary-color);
+  border-radius: 3px;
+  padding: 0.5em 1em;
+  overflow: hidden;
+}
+.blob pre {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--font-color);
+  white-space: pre;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  font-family: var(--mono-font-stack, monospace);
+}
+.blob .linenos {
+  flex: 0 0 auto;
+  text-align: right;
+  color: var(--secondary-color);
+  user-select: none;
+}
+.blob .code {
+  flex: 1 1 auto;
+  min-width: 0; /* allow the flex item to shrink so long lines scroll, not the page */
+  overflow-x: auto;
+}

@@ -50,13 +50,13 @@ test("BlobPage shows a notice for binary files", async () => {
   expect(html).toContain('href="/proj/raw/main/logo.bin"');
 });
 
-test("BlobPage does not render a phantom trailing line for files ending in a newline", async () => {
+test("BlobPage numbers lines in a gutter without a phantom trailing line", async () => {
   const html = await render(
     <BlobPage name="proj" ref="main" path="a.txt" binary={false} text={"foo\nbar\n"} size={8} />,
   );
-  // two real lines -> exactly two line-number cells, no empty third line
-  const linenoCells = html.split('class="lineno"').length - 1;
-  expect(linenoCells).toBe(2);
+  // gutter lists exactly 1 and 2 for the two real lines, no phantom 3
+  const gutter = html.match(/<pre class="linenos">([\s\S]*?)<\/pre>/)?.[1] ?? "";
+  expect(gutter.split("\n")).toEqual(["1", "2"]);
 });
 
 test("TreePage percent-encodes special characters in entry hrefs", async () => {

@@ -24,18 +24,10 @@ export function BlobPage(props: BlobProps) {
       {props.binary ? (
         <p class="binary">Binary file not shown.</p>
       ) : (
-        <table class="blob">
-          <tbody>
-            {lines.map((line, i) => (
-              <tr>
-                <td class="lineno">{i + 1}</td>
-                <td>
-                  <pre>{line}</pre>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div class="blob">
+          <pre class="linenos">{lines.map((_, i) => i + 1).join("\n")}</pre>
+          <pre class="code">{lines.join("\n")}</pre>
+        </div>
       )}
     </>
   );
