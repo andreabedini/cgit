@@ -111,8 +111,11 @@ export function createApp() {
   app.get("/:repo/tree/*", (c) => {
     const repo = c.get("repo");
     const disc = c.get("disc");
-    if (!disc || !repo) throw notFound("Repository not found");
-    const tail = c.req.path.slice(`/${disc.name}/tree/`.length);
+    // A slash-less stub like `/repo/tree` matches this route with an empty
+    // wildcard, but useRepository hasn't opened the repo for it. Returning 404
+    // lets appendTrailingSlash redirect it to the canonical `/repo/tree/`.
+    if (!disc || !repo) throw notFound("Not found");
+    const tail = c.req.path.slice(`/${c.req.param("repo")}/tree/`.length);
     const refNames = repo.references().map((r) => r.name);
     const { ref, path } = splitRefPath(tail, refNames, repo.headRef());
 
@@ -134,8 +137,11 @@ export function createApp() {
   app.get("/:repo/raw/*", (c) => {
     const repo = c.get("repo");
     const disc = c.get("disc");
-    if (!disc || !repo) throw notFound("Repository not found");
-    const tail = c.req.path.slice(`/${disc.name}/raw/`.length);
+    // A slash-less stub like `/repo/tree` matches this route with an empty
+    // wildcard, but useRepository hasn't opened the repo for it. Returning 404
+    // lets appendTrailingSlash redirect it to the canonical `/repo/tree/`.
+    if (!disc || !repo) throw notFound("Not found");
+    const tail = c.req.path.slice(`/${c.req.param("repo")}/raw/`.length);
     const refNames = repo.references().map((r) => r.name);
     const { ref, path } = splitRefPath(tail, refNames, repo.headRef());
 
