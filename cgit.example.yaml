@@ -1,0 +1,11 @@
+# cgit-ts configuration. Point the server at this file with the CGIT_CONFIG
+# environment variable, or place it at ./cgit.yaml. All sections are optional;
+# a missing file falls back to built-in defaults.
+
+# Map file extensions to MIME types. These override and extend the built-in
+# defaults. The blob view renders image/* inline, other non-text/* types as a
+# download notice, and everything else as text. The /raw/ route serves the
+# mapped type as its Content-Type.
+mimetype:
+  gif: image/gif
+  pdf: application/pdf

@@ -10,6 +10,7 @@ export interface FixtureRepo {
   subdir: string;           // "src"
   subdirFile: string;       // "src/hello.txt"
   binaryFile: string;       // "logo.bin"
+  imageFile: string;        // "icon.gif"
   cleanup: () => void;
 }
 
@@ -53,6 +54,8 @@ export async function createFixtureRepo(): Promise<FixtureRepo> {
     await Bun.write(join(work, "src", "hello.txt"), "hi from src\n");
     // NUL byte in the first bytes -> detected as binary.
     await Bun.write(join(work, "logo.bin"), new Uint8Array([0, 1, 2, 3, 0, 255, 10, 0]));
+    // A GIF header — content is irrelevant; the .gif extension drives MIME.
+    await Bun.write(join(work, "icon.gif"), new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x00]));
     await run(work, "add", "-A");
     await run(work, "commit", "-q", "-m", "Add b.txt");
     await run(work, "tag", "-a", "-m", "Release 2.0", "v2.0");
@@ -69,6 +72,7 @@ export async function createFixtureRepo(): Promise<FixtureRepo> {
       subdir: "src",
       subdirFile: "src/hello.txt",
       binaryFile: "logo.bin",
+      imageFile: "icon.gif",
       cleanup,
     };
   } catch (err) {
