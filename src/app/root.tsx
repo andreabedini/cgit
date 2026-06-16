@@ -1,10 +1,10 @@
 import { Hono } from "hono";
-import type { SiteConfig } from "../config/config";
+import type { AppEnv } from "../config/config";
 import { repolistVM } from "../data/pages";
 import { RepolistPage } from "../views/default/RepolistPage";
 
-export function createRootApp(cfg: SiteConfig) {
-  const app = new Hono();
-  app.get("/", (c) => c.render(<RepolistPage vm={repolistVM(cfg)} />));
+export function createRootApp() {
+  const app = new Hono<AppEnv>();
+  app.get("/", (c) => c.render(<RepolistPage vm={repolistVM(c.env)} />));
   return app;
 }

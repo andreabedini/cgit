@@ -1,14 +1,14 @@
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
-import { loadConfig, type SiteConfig } from "./config/config";
+import { loadConfig, type AppEnv } from "./config/config";
 import { renderer } from "./views/default/renderer";
 import { createRootApp } from "./app/root";
 import { createRepoApp } from "./app/repo";
 import { ErrorPage } from "./views/default/ErrorPage";
 import { statusForError } from "./errors";
 
-export function createApp(cfg: SiteConfig) {
-  const app = new Hono();
+export function createApp() {
+  const app = new Hono<AppEnv>();
 
   app.use(renderer);
 
@@ -18,8 +18,8 @@ export function createApp(cfg: SiteConfig) {
   app.get("/terminal.min.css", serveStatic({ path: "./src/public/terminal.min.css" }));
   app.get("/cgit.css", serveStatic({ path: "./src/public/cgit.css" }));
 
-  app.route("/", createRootApp(cfg));
-  app.route("/", createRepoApp(cfg));
+  app.route("/", createRootApp());
+  app.route("/", createRepoApp());
 
   app.notFound((c) => {
     c.status(404);
@@ -37,9 +37,12 @@ export function createApp(cfg: SiteConfig) {
   return app;
 }
 
-const app = createApp(loadConfig());
+const app = createApp();
+// Config is read once from the environment and injected as Bindings (c.env)
+// on every request.
+const config = loadConfig();
 
 export default {
   port: Number(process.env.PORT ?? 3000),
-  fetch: app.fetch,
+  fetch: (req: Request) => app.fetch(req, config),
 };
