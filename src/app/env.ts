@@ -12,6 +12,7 @@ export type Env = {
     CGIT_SUMMARY_LOG: number;
     CGIT_LOG_PAGE_SIZE: number;
     CGIT_REPOLIST_PAGE_SIZE: number;
+    mimeTypes: Record<string, string>;
   };
   Variables: {
     disc: DiscoveredRepo;
