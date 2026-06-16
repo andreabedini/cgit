@@ -150,7 +150,17 @@ export function createApp() {
     const contentType =
       mimeForPath(path, c.env.mimeTypes) ??
       (isBinary(bytes) ? "application/octet-stream" : "text/plain; charset=utf-8");
-    return new Response(bytes, { headers: { "Content-Type": contentType } });
+    // Raw blobs are untrusted repo content. `nosniff` stops the browser from
+    // re-interpreting them (e.g. a text file as HTML); `sandbox` neutralises
+    // script in a directly-navigated SVG/HTML blob. Inline <img> previews are
+    // unaffected (SVG loaded via <img> can't script regardless).
+    return new Response(bytes, {
+      headers: {
+        "Content-Type": contentType,
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "sandbox",
+      },
+    });
   });
 
   app.notFound((c) => {

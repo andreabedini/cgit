@@ -99,6 +99,12 @@ test("GET /project/raw/main/README.md serves text/plain", async () => {
   expect(await res.text()).toContain("# Fixture");
 });
 
+test("raw responses carry hardening headers (no sniffing, sandboxed)", async () => {
+  const res = await req("/project/raw/main/README.md");
+  expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+  expect(res.headers.get("content-security-policy")).toBe("sandbox");
+});
+
 test("GET /project/raw/main/logo.bin serves octet-stream", async () => {
   const res = await req("/project/raw/main/logo.bin");
   expect(res.status).toBe(200);
