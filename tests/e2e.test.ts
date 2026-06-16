@@ -66,6 +66,54 @@ test("GET /project/log redirects to the trailing-slash form", async () => {
   expect(new URL(res.headers.get("location")!, "http://localhost").pathname).toBe("/project/log/");
 });
 
+test("GET /project/tree/ lists the root tree", async () => {
+  const res = await req("/project/tree/");
+  expect(res.status).toBe(200);
+  const html = await res.text();
+  expect(html).toContain("README.md");
+  expect(html).toContain("src/");
+});
+
+test("GET /project/tree/main/src lists a subdirectory", async () => {
+  const html = await (await req("/project/tree/main/src")).text();
+  expect(html).toContain("hello.txt");
+});
+
+test("GET /project/tree/main/README.md shows the file with a raw link", async () => {
+  const html = await (await req("/project/tree/main/README.md")).text();
+  expect(html).toContain("# Fixture");
+  expect(html).toContain('href="/project/raw/main/README.md"');
+});
+
+test("GET /project/tree/main/logo.bin shows a binary notice", async () => {
+  const html = await (await req("/project/tree/main/logo.bin")).text();
+  expect(html).toContain("Binary file not shown.");
+});
+
+test("GET /project/raw/main/README.md serves text/plain", async () => {
+  const res = await req("/project/raw/main/README.md");
+  expect(res.status).toBe(200);
+  expect(res.headers.get("content-type")).toContain("text/plain");
+  expect(await res.text()).toContain("# Fixture");
+});
+
+test("GET /project/raw/main/logo.bin serves octet-stream", async () => {
+  const res = await req("/project/raw/main/logo.bin");
+  expect(res.status).toBe(200);
+  expect(res.headers.get("content-type")).toContain("application/octet-stream");
+});
+
+test("GET /project/tree/main/missing 404s without a redirect", async () => {
+  const res = await req("/project/tree/main/missing");
+  expect(res.status).toBe(404);
+});
+
+test("GET /project/tree redirects to the trailing-slash form", async () => {
+  const res = await req("/project/tree");
+  expect(res.status).toBe(301);
+  expect(new URL(res.headers.get("location")!, "http://localhost").pathname).toBe("/project/tree/");
+});
+
 test("GET /cgit.css serves the stylesheet", async () => {
   const res = await req("/cgit.css");
   expect(res.status).toBe(200);

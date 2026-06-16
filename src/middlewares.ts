@@ -7,9 +7,11 @@ import { findRepo, openRepository } from "./git";
 // handle once the handler has run, so handlers never open or free repos
 // themselves.
 export const useRepository = factory.createMiddleware(async (c, next) => {
-  // Bare `/:repo` is handled by appendTrailingSlash (it 404s then redirects);
-  // skip opening a repo we would only throw away on the redirect.
-  if (!c.req.path.endsWith("/")) return next();
+  // Redirect-only stubs (`/repo`, `/repo/log`) lack a trailing slash and get sent
+  // to their slash form by appendTrailingSlash — don't open a repo we'd discard.
+  // tree/raw are genuine slash-less content paths, so open the repo for those.
+  const p = c.req.path;
+  if (!p.endsWith("/") && !p.includes("/tree/") && !p.includes("/raw/")) return next();
 
   const disc = findRepo(c.env.CGIT_SCAN_PATH, c.req.param("repo")!); // present: matched by /:repo/*
   c.set("disc", disc);

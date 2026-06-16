@@ -38,8 +38,14 @@ function RepoNav() {
   const disc = c.get("disc");
   if (!disc) return null;
   const name = disc.name;
-  const active = c.req.path.endsWith("/log/") ? "log" : "summary";
-  const item = (page: "summary" | "log", href: string) => (
+  const path = c.req.path;
+  const active =
+    path.includes("/tree/") || path.includes("/raw/")
+      ? "tree"
+      : path.endsWith("/log/")
+        ? "log"
+        : "summary";
+  const item = (page: "summary" | "log" | "tree", href: string) => (
     <li>
       <a class={`menu-item${active === page ? " active" : ""}`} href={href}>
         {page}
@@ -51,6 +57,7 @@ function RepoNav() {
       <ul>
         {item("summary", `/${name}/`)}
         {item("log", `/${name}/log/`)}
+        {item("tree", `/${name}/tree/`)}
       </ul>
     </nav>
   );

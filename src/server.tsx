@@ -2,9 +2,13 @@ import { serveStatic } from "hono/bun";
 import { appendTrailingSlash } from "hono/trailing-slash";
 import { factory } from "./app/env";
 import { loadConfig } from "./config/config";
-import { statusForError } from "./errors";
+import { notFound, statusForError } from "./errors";
 import { openRepository } from "./git";
 import { scanRepos } from "./git/scan";
+import { isBinary } from "./blob";
+import { splitRefPath } from "./git/refpath";
+import { BlobPage } from "./views/default/BlobPage";
+import { TreePage } from "./views/default/TreePage";
 import { buildDecorationMap, useRepository } from "./middlewares";
 import { ErrorPage } from "./views/default/ErrorPage";
 import { LogPage } from "./views/default/LogPage";
@@ -38,7 +42,14 @@ export function createApp() {
     return c.render(<RepolistPage entries={entries} now={new Date()} />);
   });
 
-  app.use(appendTrailingSlash());
+  // appendTrailingSlash is a 404 fallback: it sends slash-less paths to their
+  // slash form only when the response is 404. Exclude tree/raw so a genuine
+  // missing-path 404 there is returned as-is rather than bounced to a slash URL.
+  app.use(
+    appendTrailingSlash({
+      skip: (p) => p.includes("/tree/") || p.includes("/raw/"),
+    }),
+  );
 
   // Nested layout adds the per-repo menu; useRepository opens the repo and
   // exposes it (and its discovered metadata) on the context.
@@ -95,6 +106,45 @@ export function createApp() {
         now={new Date()}
       />,
     );
+  });
+
+  app.get("/:repo/tree/*", (c) => {
+    const repo = c.get("repo");
+    const disc = c.get("disc");
+    if (!disc || !repo) throw notFound("Repository not found");
+    const tail = c.req.path.slice(`/${disc.name}/tree/`.length);
+    const refNames = repo.references().map((r) => r.name);
+    const { ref, path } = splitRefPath(tail, refNames, repo.headRef());
+
+    const entries = repo.tree(ref, path);
+    if (entries) {
+      return c.render(<TreePage name={disc.name} ref={ref} path={path} entries={entries} />);
+    }
+    const bytes = repo.readFileAtRef(ref, path);
+    if (bytes !== null) {
+      const binary = isBinary(bytes);
+      const text = binary ? undefined : new TextDecoder().decode(bytes);
+      return c.render(
+        <BlobPage name={disc.name} ref={ref} path={path} binary={binary} text={text} size={bytes.length} />,
+      );
+    }
+    throw notFound(`Path not found: ${path}`);
+  });
+
+  app.get("/:repo/raw/*", (c) => {
+    const repo = c.get("repo");
+    const disc = c.get("disc");
+    if (!disc || !repo) throw notFound("Repository not found");
+    const tail = c.req.path.slice(`/${disc.name}/raw/`.length);
+    const refNames = repo.references().map((r) => r.name);
+    const { ref, path } = splitRefPath(tail, refNames, repo.headRef());
+
+    const bytes = repo.readFileAtRef(ref, path);
+    if (bytes === null) throw notFound(`Path not found: ${path}`);
+    const contentType = isBinary(bytes)
+      ? "application/octet-stream"
+      : "text/plain; charset=utf-8";
+    return new Response(bytes, { headers: { "Content-Type": contentType } });
   });
 
   app.notFound((c) => {
