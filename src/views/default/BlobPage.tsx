@@ -1,4 +1,5 @@
 import { Breadcrumb } from "./Breadcrumb";
+import { encodeSegments } from "./paths";
 
 export interface BlobProps {
   name: string;
@@ -10,7 +11,9 @@ export interface BlobProps {
 }
 
 export function BlobPage(props: BlobProps) {
-  const rawHref = `/${props.name}/raw/${props.ref}/${props.path}`;
+  const rawHref = `/${encodeURIComponent(props.name)}/raw/${encodeSegments(props.ref)}/${encodeSegments(props.path)}`;
+  const lines = (props.text ?? "").split("\n");
+  if (lines.length > 1 && lines[lines.length - 1] === "") lines.pop();
   return (
     <>
       <title>{`${props.name}: ${props.path}`}</title>
@@ -23,7 +26,7 @@ export function BlobPage(props: BlobProps) {
       ) : (
         <table class="blob">
           <tbody>
-            {(props.text ?? "").split("\n").map((line, i) => (
+            {lines.map((line, i) => (
               <tr>
                 <td class="lineno">{i + 1}</td>
                 <td>

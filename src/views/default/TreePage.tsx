@@ -1,5 +1,6 @@
 import type { TreeEntry } from "../../git/facade";
 import { Breadcrumb } from "./Breadcrumb";
+import { encodeSegments } from "./paths";
 
 export interface TreeProps {
   name: string;
@@ -13,7 +14,7 @@ function formatMode(mode: number): string {
 }
 
 export function TreePage(props: TreeProps) {
-  const base = `/${props.name}/tree/${props.ref}`;
+  const base = `/${encodeURIComponent(props.name)}/tree/${encodeSegments(props.ref)}`;
   const dir = props.path ? props.path + "/" : "";
   // Directories first, then everything else, each group sorted by name.
   const sorted = [...props.entries].sort(
@@ -40,7 +41,7 @@ export function TreePage(props: TreeProps) {
                 <code>{formatMode(e.mode)}</code>
               </td>
               <td>
-                <a href={`${base}/${dir}${e.name}`}>
+                <a href={`${base}/${encodeSegments(dir + e.name)}`}>
                   {e.type === "tree" ? e.name + "/" : e.name}
                 </a>
               </td>

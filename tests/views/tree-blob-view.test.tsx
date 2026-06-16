@@ -49,3 +49,24 @@ test("BlobPage shows a notice for binary files", async () => {
   expect(html).toContain("Binary file not shown.");
   expect(html).toContain('href="/proj/raw/main/logo.bin"');
 });
+
+test("BlobPage does not render a phantom trailing line for files ending in a newline", async () => {
+  const html = await render(
+    <BlobPage name="proj" ref="main" path="a.txt" binary={false} text={"foo\nbar\n"} size={8} />,
+  );
+  // two real lines -> exactly two line-number cells, no empty third line
+  const linenoCells = html.split('class="lineno"').length - 1;
+  expect(linenoCells).toBe(2);
+});
+
+test("TreePage percent-encodes special characters in entry hrefs", async () => {
+  const html = await render(
+    <TreePage
+      name="proj"
+      ref="main"
+      path=""
+      entries={[{ name: "my file.txt", mode: 0o100644, type: "blob", oid: "f".repeat(40), size: 1 }]}
+    />,
+  );
+  expect(html).toContain('href="/proj/tree/main/my%20file.txt"');
+});

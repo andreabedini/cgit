@@ -1,9 +1,11 @@
 // Path breadcrumb shared by the tree and blob views. Renders
 // `name / ref / seg / seg ...` where every parent segment links back into the
 // `/tree/` route and the final segment is plain text.
+import { encodeSegments } from "./paths";
+
 export function Breadcrumb(props: { name: string; ref: string; path: string }) {
   const segments = props.path.split("/").filter(Boolean);
-  const base = `/${props.name}/tree/${props.ref}`;
+  const base = `/${encodeURIComponent(props.name)}/tree/${encodeSegments(props.ref)}`;
   let acc = "";
   return (
     <nav class="breadcrumb">
@@ -16,7 +18,7 @@ export function Breadcrumb(props: { name: string; ref: string; path: string }) {
         return (
           <>
             <span> / </span>
-            {last ? <span>{seg}</span> : <a href={`${base}${acc}`}>{seg}</a>}
+            {last ? <span>{seg}</span> : <a href={`${base}${encodeSegments(acc)}`}>{seg}</a>}
           </>
         );
       })}
