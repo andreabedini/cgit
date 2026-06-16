@@ -5,8 +5,8 @@ export interface BlobProps {
   name: string;
   ref: string;
   path: string;
-  binary: boolean;
-  text?: string;   // present when !binary
+  kind: "text" | "binary" | "image";
+  text?: string; // present when kind === "text"
   size: number;
 }
 
@@ -21,7 +21,9 @@ export function BlobPage(props: BlobProps) {
       <p>
         <a href={rawHref}>raw</a> &middot; {props.size} bytes
       </p>
-      {props.binary ? (
+      {props.kind === "image" ? (
+        <img class="blob-image" src={rawHref} alt={props.path} />
+      ) : props.kind === "binary" ? (
         <p class="binary">Binary file not shown.</p>
       ) : (
         <div class="blob">

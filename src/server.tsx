@@ -5,7 +5,7 @@ import { loadConfig } from "./config/config";
 import { notFound, statusForError } from "./errors";
 import { openRepository } from "./git";
 import { scanRepos } from "./git/scan";
-import { isBinary } from "./blob";
+import { isBinary, classifyBlob } from "./blob";
 import { splitRefPath } from "./git/refpath";
 import { BlobPage } from "./views/default/BlobPage";
 import { TreePage } from "./views/default/TreePage";
@@ -125,10 +125,9 @@ export function createApp() {
     }
     const bytes = repo.readFileAtRef(ref, path);
     if (bytes !== null) {
-      const binary = isBinary(bytes);
-      const text = binary ? undefined : new TextDecoder().decode(bytes);
+      const { kind, text } = classifyBlob(bytes, undefined);
       return c.render(
-        <BlobPage name={disc.name} ref={ref} path={path} binary={binary} text={text} size={bytes.length} />,
+        <BlobPage name={disc.name} ref={ref} path={path} kind={kind} text={text} size={bytes.length} />,
       );
     }
     throw notFound(`Path not found: ${path}`);

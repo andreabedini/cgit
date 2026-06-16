@@ -33,7 +33,7 @@ test("TreePage hoists its title and lists directories before files", async () =>
 
 test("BlobPage hoists its title, renders text lines and a raw link", async () => {
   const html = await render(
-    <BlobPage name="proj" ref="main" path="a.txt" binary={false} text={"foo\nbar"} size={7} />,
+    <BlobPage name="proj" ref="main" path="a.txt" kind="text" text={"foo\nbar"} size={7} />,
   );
   expect(headOf(html)).toContain("<title>proj: a.txt</title>");
   expect(html).toContain('href="/proj/raw/main/a.txt"');
@@ -44,7 +44,7 @@ test("BlobPage hoists its title, renders text lines and a raw link", async () =>
 
 test("BlobPage shows a notice for binary files", async () => {
   const html = await render(
-    <BlobPage name="proj" ref="main" path="logo.bin" binary={true} size={8} />,
+    <BlobPage name="proj" ref="main" path="logo.bin" kind="binary" size={8} />,
   );
   expect(html).toContain("Binary file not shown.");
   expect(html).toContain('href="/proj/raw/main/logo.bin"');
@@ -52,7 +52,7 @@ test("BlobPage shows a notice for binary files", async () => {
 
 test("BlobPage numbers lines in a gutter without a phantom trailing line", async () => {
   const html = await render(
-    <BlobPage name="proj" ref="main" path="a.txt" binary={false} text={"foo\nbar\n"} size={8} />,
+    <BlobPage name="proj" ref="main" path="a.txt" kind="text" text={"foo\nbar\n"} size={8} />,
   );
   // gutter lists exactly 1 and 2 for the two real lines, no phantom 3
   const gutter = html.match(/<pre class="linenos">([\s\S]*?)<\/pre>/)?.[1] ?? "";
@@ -69,4 +69,12 @@ test("TreePage percent-encodes special characters in entry hrefs", async () => {
     />,
   );
   expect(html).toContain('href="/proj/tree/main/my%20file.txt"');
+});
+
+test("BlobPage renders an inline image for image blobs", async () => {
+  const html = await render(
+    <BlobPage name="proj" ref="main" path="icon.gif" kind="image" size={42} />,
+  );
+  expect(html).toContain("<img");
+  expect(html).toContain('src="/proj/raw/main/icon.gif"');
 });

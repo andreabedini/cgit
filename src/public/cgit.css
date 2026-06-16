@@ -90,3 +90,8 @@ pre.about {
   min-width: 0; /* allow the flex item to shrink so long lines scroll, not the page */
   overflow-x: auto;
 }
+
+/* Inline image preview in the blob view. */
+.blob-image {
+  max-width: 100%;
+}
