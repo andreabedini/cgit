@@ -50,13 +50,14 @@ test("GET /missing/ 404s", async () => {
 test("GET /project redirects to the trailing-slash form", async () => {
   const res = await app.request("/project");
   expect(res.status).toBe(301);
-  expect(res.headers.get("location")).toBe("/project/");
+  // appendTrailingSlash() emits an absolute Location; compare the path only.
+  expect(new URL(res.headers.get("location")!, "http://localhost").pathname).toBe("/project/");
 });
 
 test("GET /project/log redirects to the trailing-slash form", async () => {
   const res = await app.request("/project/log");
   expect(res.status).toBe(301);
-  expect(res.headers.get("location")).toBe("/project/log/");
+  expect(new URL(res.headers.get("location")!, "http://localhost").pathname).toBe("/project/log/");
 });
 
 test("GET /cgit.css serves the stylesheet", async () => {
