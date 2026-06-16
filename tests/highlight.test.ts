@@ -32,3 +32,9 @@ test("highlightBlob returns Shiki markup for an unknown language", async () => {
   const html = await highlightBlob("hello world\n", "a.unknownext", 12);
   expect(html).toContain('class="shiki');
 });
+
+test("highlightBlob drops the trailing newline's phantom empty line", async () => {
+  const html = await highlightBlob("a\nb\n", "a.txt", 4);
+  const lineSpans = html.split('class="line"').length - 1;
+  expect(lineSpans).toBe(2);
+});

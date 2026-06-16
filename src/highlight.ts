@@ -41,9 +41,13 @@ export function langForBlob(path: string, size: number): string {
 export async function highlightBlob(code: string, path: string, size: number): Promise<string> {
   const themes = { light: "github-light", dark: "github-dark" } as const;
   const lang = langForBlob(path, size);
+  // Strip one trailing newline so Shiki doesn't emit an empty final <span
+  // class="line">, which the CSS line-number counter would render as a phantom
+  // blank line (matches the old manual gutter's behaviour).
+  const src = code.replace(/\n$/, "");
   try {
-    return await codeToHtml(code, { lang, themes });
+    return await codeToHtml(src, { lang, themes });
   } catch {
-    return await codeToHtml(code, { lang: "text", themes });
+    return await codeToHtml(src, { lang: "text", themes });
   }
 }

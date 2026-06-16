@@ -90,6 +90,8 @@ pre.about {
   user-select: none;
 }
 @media (prefers-color-scheme: dark) {
+  /* `span` does not match ::before, so the line-number gutter keeps
+     --secondary-color in both themes; only token spans flip to --shiki-dark. */
   .blob .shiki,
   .blob .shiki span {
     color: var(--shiki-dark) !important;
