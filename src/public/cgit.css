@@ -58,20 +58,26 @@ pre.about {
 /* Blob (file) view: Shiki-highlighted source with a line-number gutter.
    Terminal.css styles every <pre> as a bordered, padded, wrapping card; the
    .blob overrides below strip that and add CSS-counter line numbers over
-   Shiki's per-line spans. Shiki's dual github light/dark themes are selected
-   via prefers-color-scheme (the dark block flips token colors to --shiki-dark). */
+   Shiki's per-line spans. The panel uses the site's --block-background-color
+   (so it matches the About box and other panels) rather than Shiki's baked-in
+   theme background; only Shiki's token colors are kept, flipped to --shiki-dark
+   in dark mode via prefers-color-scheme. */
 .blob {
   border: 1px solid var(--secondary-color);
   border-radius: 3px;
   overflow-x: auto;
+  background-color: var(--block-background-color);
 }
 .blob .shiki {
   margin: 0;
-  padding: 0.5em 0;
+  padding: 0.5em 1em;
   border: 0;
   border-radius: 0;
   white-space: pre;
   line-height: 1.5;
+  /* Suppress Shiki's baked theme background (#fff light / #24292e dark) so the
+     .blob panel colour shows through and matches the rest of the site. */
+  background-color: transparent !important;
 }
 .blob .shiki code {
   counter-reset: line;
@@ -90,12 +96,11 @@ pre.about {
   user-select: none;
 }
 @media (prefers-color-scheme: dark) {
-  /* `span` does not match ::before, so the line-number gutter keeps
-     --secondary-color in both themes; only token spans flip to --shiki-dark. */
-  .blob .shiki,
+  /* Flip token text to each token's dark-theme colour. `span` does not match
+     ::before, so the line-number gutter keeps --secondary-color; the panel
+     background stays --block-background-color (set above) in both themes. */
   .blob .shiki span {
     color: var(--shiki-dark) !important;
-    background-color: var(--shiki-dark-bg) !important;
   }
 }
 
