@@ -6,6 +6,7 @@ import { notFound, statusForError } from "./errors";
 import { openRepository } from "./git";
 import { scanRepos } from "./git/scan";
 import { isBinary, classifyBlob } from "./blob";
+import { highlightBlob } from "./highlight";
 import { mimeForPath } from "./mime";
 import { splitRefPath } from "./git/refpath";
 import { BlobPage } from "./views/default/BlobPage";
@@ -109,7 +110,7 @@ export function createApp() {
     );
   });
 
-  app.get("/:repo/tree/*", (c) => {
+  app.get("/:repo/tree/*", async (c) => {
     const repo = c.get("repo");
     const disc = c.get("disc");
     // A slash-less stub like `/repo/tree` matches this route with an empty
@@ -127,8 +128,10 @@ export function createApp() {
     const bytes = repo.readFileAtRef(ref, path);
     if (bytes !== null) {
       const { kind, text } = classifyBlob(bytes, mimeForPath(path, c.env.mimeTypes));
+      const highlighted =
+        kind === "text" ? await highlightBlob(text ?? "", path, bytes.length) : undefined;
       return c.render(
-        <BlobPage name={disc.name} ref={ref} path={path} kind={kind} text={text} size={bytes.length} />,
+        <BlobPage name={disc.name} ref={ref} path={path} kind={kind} highlighted={highlighted} size={bytes.length} />,
       );
     }
     throw notFound(`Path not found: ${path}`);

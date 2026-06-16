@@ -6,14 +6,12 @@ export interface BlobProps {
   ref: string;
   path: string;
   kind: "text" | "binary" | "image";
-  text?: string; // present when kind === "text"
+  highlighted?: string; // Shiki HTML, present when kind === "text"
   size: number;
 }
 
 export function BlobPage(props: BlobProps) {
   const rawHref = `/${encodeURIComponent(props.name)}/raw/${encodeSegments(props.ref)}/${encodeSegments(props.path)}`;
-  const lines = (props.text ?? "").split("\n");
-  if (lines.length > 1 && lines[lines.length - 1] === "") lines.pop();
   return (
     <>
       <title>{`${props.name}: ${props.path}`}</title>
@@ -26,10 +24,7 @@ export function BlobPage(props: BlobProps) {
       ) : props.kind === "binary" ? (
         <p class="binary">Binary file not shown.</p>
       ) : (
-        <div class="blob">
-          <pre class="linenos">{lines.map((_, i) => i + 1).join("\n")}</pre>
-          <pre class="code">{lines.join("\n")}</pre>
-        </div>
+        <div class="blob" dangerouslySetInnerHTML={{ __html: props.highlighted ?? "" }} />
       )}
     </>
   );

@@ -55,40 +55,46 @@ pre.about {
   white-space: pre-wrap;
 }
 
-/* Blob (file) view: one code block with a line-number gutter. Terminal.css
-   styles every <pre> as a bordered, padded card and wraps long lines; override
-   that inside .blob so the source renders as a single compact, aligned listing. */
+/* Blob (file) view: Shiki-highlighted source with a line-number gutter.
+   Terminal.css styles every <pre> as a bordered, padded, wrapping card; the
+   .blob overrides below strip that and add CSS-counter line numbers over
+   Shiki's per-line spans. Shiki's dual github light/dark themes are selected
+   via prefers-color-scheme (the dark block flips token colors to --shiki-dark). */
 .blob {
-  display: flex;
-  gap: 1em;
-  background-color: var(--block-background-color);
   border: 1px solid var(--secondary-color);
   border-radius: 3px;
-  padding: 0.5em 1em;
-  overflow: hidden;
+  overflow-x: auto;
 }
-.blob pre {
+.blob .shiki {
   margin: 0;
-  padding: 0;
+  padding: 0.5em 0;
   border: 0;
-  background: transparent;
-  color: var(--font-color);
+  border-radius: 0;
   white-space: pre;
-  word-break: normal;
-  word-wrap: normal;
   line-height: 1.5;
-  font-family: var(--mono-font-stack, monospace);
 }
-.blob .linenos {
-  flex: 0 0 auto;
+.blob .shiki code {
+  counter-reset: line;
+}
+.blob .shiki .line {
+  counter-increment: line;
+}
+.blob .shiki .line::before {
+  content: counter(line);
+  display: inline-block;
+  width: 3ch;
+  margin-right: 1.5em;
+  padding: 0 0.5em;
   text-align: right;
   color: var(--secondary-color);
   user-select: none;
 }
-.blob .code {
-  flex: 1 1 auto;
-  min-width: 0; /* allow the flex item to shrink so long lines scroll, not the page */
-  overflow-x: auto;
+@media (prefers-color-scheme: dark) {
+  .blob .shiki,
+  .blob .shiki span {
+    color: var(--shiki-dark) !important;
+    background-color: var(--shiki-dark-bg) !important;
+  }
 }
 
 /* Inline image preview in the blob view. */

@@ -81,9 +81,10 @@ test("GET /project/tree/main/src lists a subdirectory", async () => {
   expect(html).toContain("hello.txt");
 });
 
-test("GET /project/tree/main/README.md shows the file with a raw link", async () => {
+test("GET /project/tree/main/README.md highlights the file with a raw link", async () => {
   const html = await (await req("/project/tree/main/README.md")).text();
-  expect(html).toContain("# Fixture");
+  expect(html).toContain('class="shiki'); // syntax-highlighted
+  expect(html).toContain("Fixture");        // content present (may be tokenized)
   expect(html).toContain('href="/project/raw/main/README.md"');
 });
 

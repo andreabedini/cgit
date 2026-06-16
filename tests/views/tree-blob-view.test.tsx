@@ -31,14 +31,21 @@ test("TreePage hoists its title and lists directories before files", async () =>
   expect(html).toContain("100644");
 });
 
-test("BlobPage hoists its title, renders text lines and a raw link", async () => {
+test("BlobPage hoists its title and injects highlighted HTML with a raw link", async () => {
   const html = await render(
-    <BlobPage name="proj" ref="main" path="a.txt" kind="text" text={"foo\nbar"} size={7} />,
+    <BlobPage
+      name="proj"
+      ref="main"
+      path="a.txt"
+      kind="text"
+      highlighted={'<pre class="shiki"><code><span class="line">foo</span></code></pre>'}
+      size={7}
+    />,
   );
   expect(headOf(html)).toContain("<title>proj: a.txt</title>");
   expect(html).toContain('href="/proj/raw/main/a.txt"');
+  expect(html).toContain('class="shiki"');
   expect(html).toContain("foo");
-  expect(html).toContain("bar");
   expect(html).toContain("7 bytes");
 });
 
@@ -50,13 +57,19 @@ test("BlobPage shows a notice for binary files", async () => {
   expect(html).toContain('href="/proj/raw/main/logo.bin"');
 });
 
-test("BlobPage numbers lines in a gutter without a phantom trailing line", async () => {
+test("BlobPage injects the highlighted HTML raw, not escaped", async () => {
   const html = await render(
-    <BlobPage name="proj" ref="main" path="a.txt" kind="text" text={"foo\nbar\n"} size={8} />,
+    <BlobPage
+      name="proj"
+      ref="main"
+      path="a.txt"
+      kind="text"
+      highlighted={'<pre class="shiki"><span class="line">x</span></pre>'}
+      size={1}
+    />,
   );
-  // gutter lists exactly 1 and 2 for the two real lines, no phantom 3
-  const gutter = html.match(/<pre class="linenos">([\s\S]*?)<\/pre>/)?.[1] ?? "";
-  expect(gutter.split("\n")).toEqual(["1", "2"]);
+  expect(html).toContain('<pre class="shiki">');
+  expect(html).not.toContain("&lt;pre");
 });
 
 test("TreePage percent-encodes special characters in entry hrefs", async () => {
