@@ -36,3 +36,11 @@ test("unknown non-oid first segment falls back to default ref with the whole tai
 test("a trailing slash on a directory tail is trimmed", () => {
   expect(splitRefPath("main/src/", refs, "main")).toEqual({ ref: "main", path: "src" });
 });
+
+test("HEAD is recognized as a ref (cgit's canonical tree URLs use it)", () => {
+  expect(splitRefPath("HEAD/man", refs, "main")).toEqual({ ref: "HEAD", path: "man" });
+});
+
+test("HEAD with no trailing path yields an empty path", () => {
+  expect(splitRefPath("HEAD", refs, "main")).toEqual({ ref: "HEAD", path: "" });
+});

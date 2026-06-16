@@ -3,7 +3,7 @@
 // Refs can contain slashes (e.g. "feature/login"), so the split is ambiguous on
 // its own. We resolve greedily against the repo's known ref names:
 //   1. the LONGEST ref name that is a prefix of the tail (on a segment boundary)
-//   2. else, if the first segment looks like a hex oid, treat it as the ref
+//   2. else, if the first segment is HEAD or looks like a hex oid, treat it as the ref
 //   3. else, default to `defaultRef` with the whole tail as the path
 export function splitRefPath(
   tail: string,
@@ -20,10 +20,10 @@ export function splitRefPath(
     return { ref: match, path: normalized.slice(match.length).replace(/^\/+/, "") };
   }
 
-  // 2. hex oid first segment
+  // 2. HEAD or a hex oid first segment (libgit2 revparse resolves both)
   const slash = normalized.indexOf("/");
   const first = slash === -1 ? normalized : normalized.slice(0, slash);
-  if (/^[0-9a-f]{4,40}$/i.test(first)) {
+  if (first === "HEAD" || /^[0-9a-f]{4,40}$/i.test(first)) {
     return { ref: first, path: slash === -1 ? "" : normalized.slice(slash + 1) };
   }
 
