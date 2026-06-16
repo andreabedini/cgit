@@ -1,12 +1,15 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 export interface FixtureRepo {
-  path: string;            // path to the bare repo
+  path: string;             // path to the bare repo
   commitSubjects: string[]; // newest-first
   branches: string[];
   tags: string[];
+  subdir: string;           // "src"
+  subdirFile: string;       // "src/hello.txt"
+  binaryFile: string;       // "logo.bin"
   cleanup: () => void;
 }
 
@@ -46,7 +49,11 @@ export async function createFixtureRepo(): Promise<FixtureRepo> {
     await run(work, "commit", "-q", "-m", "Add a.txt");
     await run(work, "tag", "v1.0");
     await Bun.write(join(work, "b.txt"), "second\n");
-    await run(work, "add", "b.txt");
+    mkdirSync(join(work, "src"), { recursive: true });
+    await Bun.write(join(work, "src", "hello.txt"), "hi from src\n");
+    // NUL byte in the first bytes -> detected as binary.
+    await Bun.write(join(work, "logo.bin"), new Uint8Array([0, 1, 2, 3, 0, 255, 10, 0]));
+    await run(work, "add", "-A");
     await run(work, "commit", "-q", "-m", "Add b.txt");
     await run(work, "tag", "-a", "-m", "Release 2.0", "v2.0");
 
@@ -59,6 +66,9 @@ export async function createFixtureRepo(): Promise<FixtureRepo> {
       commitSubjects: ["Add b.txt", "Add a.txt", "Add README"],
       branches: ["main"],
       tags: ["v1.0", "v2.0"],
+      subdir: "src",
+      subdirFile: "src/hello.txt",
+      binaryFile: "logo.bin",
       cleanup,
     };
   } catch (err) {
