@@ -25,3 +25,12 @@ test("readFileAtRef returns null for a missing path", () => {
     repo.free();
   }
 });
+
+test("readFileAtRef returns null for a directory path", () => {
+  const repo = openRepository(fixture.path);
+  try {
+    expect(repo.readFileAtRef("main", "src")).toBeNull();
+  } finally {
+    repo.free();
+  }
+});

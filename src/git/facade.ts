@@ -24,6 +24,14 @@ export interface Reference {
   commitOid: string;  // peeled commit oid (annotated tag -> its commit)
 }
 
+export interface TreeEntry {
+  name: string;
+  mode: number;                       // raw git filemode (octal when displayed)
+  type: "blob" | "tree" | "commit";   // "commit" == submodule gitlink
+  oid: string;
+  size?: number;                      // present for blobs
+}
+
 export interface LogOptions {
   ref?: string;       // shorthand or full ref; defaults to HEAD
   offset?: number;
@@ -42,5 +50,8 @@ export interface Repository {
   log(opts: LogOptions): LogPage;
   /** Returns null if the path (or ref) was not found in the tree. */
   readFileAtRef(ref: string, path: string): Uint8Array | null;
+  /** Lists a tree at `ref`/`path`. Returns null if the path is not a tree
+   *  (e.g. it is a blob) or does not exist. `path` "" means the root tree. */
+  tree(ref: string, path: string): TreeEntry[] | null;
   free(): void;
 }

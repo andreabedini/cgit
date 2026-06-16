@@ -1,4 +1,4 @@
-import type { Repository, Reference, Commit, Signature, LogOptions, LogPage } from "../facade";
+import type { Repository, Reference, Commit, Signature, LogOptions, LogPage, TreeEntry } from "../facade";
 import {
   lib, ensureInit, ptrSlot, oidSlot, readPtr, cstr, check, toPtr,
   ptr, read, toArrayBuffer, CString,
@@ -7,6 +7,8 @@ import {
 //  added in Tasks 5-7; importing them now keeps repository.ts stable across tasks.)
 
 const GIT_OBJECT_COMMIT = 1;
+const GIT_OBJECT_TREE = 2;
+const GIT_OBJECT_BLOB = 3;
 const GIT_SORT_TIME = 2;
 const GIT_SORT_TOPOLOGICAL = 1;
 
@@ -176,14 +178,56 @@ class Repo implements Repository {
     const rc = lib.git_revparse_single(toPtr(ptr(slot)), toPtr(this.handle), cstr(spec));
     if (rc === -3 /* GIT_ENOTFOUND */) return null;
     check(rc);
-    const blob = readPtr(slot);
+    const obj = readPtr(slot);
     try {
-      const size = Number(lib.git_blob_rawsize(toPtr(blob)));
-      const dataPtr = Number(lib.git_blob_rawcontent(toPtr(blob)));
-      // Copy the bytes out of libgit2-owned memory before freeing the blob.
+      if (lib.git_object_type(toPtr(obj)) !== GIT_OBJECT_BLOB) return null;
+      const size = Number(lib.git_blob_rawsize(toPtr(obj)));
+      const dataPtr = Number(lib.git_blob_rawcontent(toPtr(obj)));
+      // Copy the bytes out of libgit2-owned memory before freeing the object.
       return new Uint8Array(toArrayBuffer(toPtr(dataPtr), 0, size)).slice();
     } finally {
-      lib.git_blob_free(toPtr(blob));
+      lib.git_object_free(toPtr(obj));
+    }
+  }
+
+  tree(ref: string, path: string): TreeEntry[] | null {
+    const spec = path ? `${ref}:${path}` : `${ref}:`;
+    const slot = ptrSlot();
+    const rc = lib.git_revparse_single(toPtr(ptr(slot)), toPtr(this.handle), cstr(spec));
+    if (rc === -3 /* GIT_ENOTFOUND */) return null;
+    check(rc);
+    const obj = readPtr(slot);
+    try {
+      if (lib.git_object_type(toPtr(obj)) !== GIT_OBJECT_TREE) return null;
+      const count = Number(lib.git_tree_entrycount(toPtr(obj)));
+      const entries: TreeEntry[] = [];
+      for (let i = 0; i < count; i++) {
+        const entry = Number(lib.git_tree_entry_byindex(toPtr(obj), i));
+        const name = String(lib.git_tree_entry_name(toPtr(entry)));
+        const mode = lib.git_tree_entry_filemode(toPtr(entry));
+        const otype = lib.git_tree_entry_type(toPtr(entry));
+        const type = otype === GIT_OBJECT_TREE ? "tree" : otype === GIT_OBJECT_COMMIT ? "commit" : "blob";
+        const oidPtr = Number(lib.git_tree_entry_id(toPtr(entry)));
+        const oid = String(lib.git_oid_tostr_s(toPtr(oidPtr)));
+        const size = type === "blob" ? this.blobSize(entry) : undefined;
+        entries.push({ name, mode, type, oid, size });
+      }
+      return entries;
+    } finally {
+      lib.git_object_free(toPtr(obj));
+    }
+  }
+
+  // Load the blob behind a tree entry just to read its size. The entry pointer is
+  // owned by the tree (no free); the looked-up object is freed here.
+  private blobSize(entry: number): number {
+    const slot = ptrSlot();
+    check(lib.git_tree_entry_to_object(toPtr(ptr(slot)), toPtr(this.handle), toPtr(entry)));
+    const obj = readPtr(slot);
+    try {
+      return Number(lib.git_blob_rawsize(toPtr(obj)));
+    } finally {
+      lib.git_object_free(toPtr(obj));
     }
   }
 
