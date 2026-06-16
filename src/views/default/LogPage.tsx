@@ -1,19 +1,25 @@
-import { RepoContext, useRepo } from "./RepoContext";
-import type { LogViewModel, PagerVM } from "../../viewmodels";
+import type { Commit, Reference } from "../../git/facade";
+import { formatAge } from "../../format";
 
-function Pager(props: { pager: PagerVM }) {
-  const { name, ref } = useRepo();
-  const base = `/${name}/log/?h=${ref}`;
-  const prevOfs = Math.max(0, props.pager.offset - props.pager.limit);
-  const nextOfs = props.pager.offset + props.pager.limit;
+function Pager(props: {
+  name: string;
+  ref: string;
+  offset: number;
+  limit: number;
+  hasPrev: boolean;
+  hasNext: boolean;
+}) {
+  const base = `/${props.name}/log/?h=${props.ref}`;
+  const prevOfs = Math.max(0, props.offset - props.limit);
+  const nextOfs = props.offset + props.limit;
   return (
     <nav class="pager btn-group">
-      {props.pager.hasPrev ? (
+      {props.hasPrev ? (
         <a class="btn btn-default" href={`${base}&ofs=${prevOfs}`}>
           &laquo; newer
         </a>
       ) : null}
-      {props.pager.hasNext ? (
+      {props.hasNext ? (
         <a class="btn btn-default" href={`${base}&ofs=${nextOfs}`}>
           older &raquo;
         </a>
@@ -22,43 +28,58 @@ function Pager(props: { pager: PagerVM }) {
   );
 }
 
-export function LogPage(props: { vm: LogViewModel }) {
-  const { vm } = props;
+export interface LogProps {
+  name: string;
+  ref: string;
+  commits: Commit[];
+  decorations: Map<string, Reference[]>;
+  offset: number;
+  limit: number;
+  hasMore: boolean;
+  now: Date;
+}
+
+export function LogPage(props: LogProps) {
   return (
     <>
-      <title>{`${vm.repo.name}: log`}</title>
-      <RepoContext.Provider value={{ name: vm.repo.name, ref: vm.ref }}>
-        <h2>
-          {vm.repo.name}: log ({vm.ref})
-        </h2>
-        <table class="log">
-          <thead>
+      <title>{`${props.name}: log`}</title>
+      <h2>
+        {props.name}: log ({props.ref})
+      </h2>
+      <table class="log">
+        <thead>
+          <tr>
+            <th>Age</th>
+            <th>Commit</th>
+            <th>Author</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {props.commits.map((commit) => (
             <tr>
-              <th>Age</th>
-              <th>Commit</th>
-              <th>Author</th>
-              <th></th>
+              <td>{formatAge(commit.author.when, props.now)}</td>
+              <td>
+                <code>{commit.abbrevOid}</code> {commit.summary}
+              </td>
+              <td>{commit.author.name}</td>
+              <td>
+                {(props.decorations.get(commit.oid) ?? []).map((d) => (
+                  <span class={`ref ${d.kind}`}>{d.name}</span>
+                ))}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {vm.rows.map((row) => (
-              <tr>
-                <td>{row.ageLabel}</td>
-                <td>
-                  <code>{row.abbrevOid}</code> {row.subject}
-                </td>
-                <td>{row.authorName}</td>
-                <td>
-                  {row.decorations.map((d) => (
-                    <span class={`ref ${d.kind}`}>{d.name}</span>
-                  ))}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <Pager pager={vm.pager} />
-      </RepoContext.Provider>
+          ))}
+        </tbody>
+      </table>
+      <Pager
+        name={props.name}
+        ref={props.ref}
+        offset={props.offset}
+        limit={props.limit}
+        hasPrev={props.offset > 0}
+        hasNext={props.hasMore}
+      />
     </>
   );
 }

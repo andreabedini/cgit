@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { createFixtureRepo, type FixtureRepo } from "./fixtures/repo";
-import { scanRepos } from "../src/scan/scan";
+import { scanRepos } from "../src/git/scan";
 import { loadConfig } from "../src/config/config";
 
 let fixture: FixtureRepo;
@@ -29,7 +29,7 @@ test("scanRepos discovers bare repos and strips .git from the name", () => {
 
 test("loadConfig provides defaults and honors CGIT_SCAN_PATH", () => {
   const cfg = loadConfig({ CGIT_SCAN_PATH: "/srv/git" });
-  expect(cfg.scanPath).toBe("/srv/git");
-  expect(cfg.logPageSize).toBeGreaterThan(0);
-  expect(cfg.summaryLog).toBeGreaterThan(0);
+  expect(cfg.CGIT_SCAN_PATH).toBe("/srv/git");
+  expect(cfg.CGIT_LOG_PAGE_SIZE).toBeGreaterThan(0);
+  expect(cfg.CGIT_SUMMARY_LOG).toBeGreaterThan(0);
 });

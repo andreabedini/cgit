@@ -1,14 +1,19 @@
-import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
-import { loadConfig, type AppEnv } from "./config/config";
-import { renderer } from "./views/default/renderer";
-import { createRootApp } from "./app/root";
-import { createRepoApp } from "./app/repo";
-import { ErrorPage } from "./views/default/ErrorPage";
+import { appendTrailingSlash } from "hono/trailing-slash";
+import { factory } from "./app/env";
+import { loadConfig } from "./config/config";
 import { statusForError } from "./errors";
+import { openRepository } from "./git";
+import { scanRepos } from "./git/scan";
+import { buildDecorationMap, useRepository } from "./middlewares";
+import { ErrorPage } from "./views/default/ErrorPage";
+import { LogPage } from "./views/default/LogPage";
+import { renderer, repoLayout } from "./views/default/renderer";
+import { RepolistPage, type RepoListEntry } from "./views/default/RepolistPage";
+import { SummaryPage } from "./views/default/SummaryPage";
 
 export function createApp() {
-  const app = new Hono<AppEnv>();
+  const app = factory.createApp();
 
   app.use(renderer);
 
@@ -18,8 +23,79 @@ export function createApp() {
   app.get("/terminal.min.css", serveStatic({ path: "./src/public/terminal.min.css" }));
   app.get("/cgit.css", serveStatic({ path: "./src/public/cgit.css" }));
 
-  app.route("/", createRootApp());
-  app.route("/", createRepoApp());
+  app.get("/", (c) => {
+    // Numbered pagination UI is a later milestone; cap to the first page for now.
+    const repos = scanRepos(c.env.CGIT_SCAN_PATH).slice(0, c.env.CGIT_REPOLIST_PAGE_SIZE);
+    const entries: RepoListEntry[] = repos.map((repo) => {
+      const handle = openRepository(repo.path);
+      try {
+        const last = handle.log({ limit: 1 }).commits[0];
+        return { repo, lastCommit: last?.author.when };
+      } finally {
+        handle.free();
+      }
+    });
+    return c.render(<RepolistPage entries={entries} now={new Date()} />);
+  });
+
+  app.use(appendTrailingSlash());
+
+  // Nested layout adds the per-repo menu; useRepository opens the repo and
+  // exposes it (and its discovered metadata) on the context.
+  app.use("/:repo/*", repoLayout);
+  app.use("/:repo/*", useRepository);
+
+  app.get("/:repo/", (c) => {
+    const repo = c.get("repo");
+    const refs = repo.references();
+    const branches = refs.filter((r) => r.kind === "branch");
+    const tags = refs.filter((r) => r.kind === "tag");
+    const recentCommits = repo.log({ limit: c.env.CGIT_SUMMARY_LOG }).commits;
+
+    const disc = c.get("disc");
+    const cloneUrls = c.env.CGIT_CLONE_URL_BASE
+      ? [`${c.env.CGIT_CLONE_URL_BASE.replace(/\/$/, "")}/${disc.name}.git`]
+      : [];
+    const readme = repo.readFileAtRef(repo.headRef(), "README.md");
+    const about = readme ? new TextDecoder().decode(readme) : undefined;
+
+    return c.render(
+      <SummaryPage
+        name={disc.name}
+        description={disc.description}
+        branches={branches.slice(0, c.env.CGIT_SUMMARY_BRANCHES)}
+        tags={tags.slice(0, c.env.CGIT_SUMMARY_TAGS)}
+        recentCommits={recentCommits}
+        cloneUrls={cloneUrls}
+        about={about}
+        now={new Date()}
+      />,
+    );
+  });
+
+  app.get("/:repo/log/", (c) => {
+    const disc = c.get("disc");
+    
+    const repo = c.get("repo");
+    const ref = c.req.query("h") || repo.headRef();
+    const offset = Math.max(0, Number(c.req.query("ofs") ?? 0) | 0);
+    const limit = c.env.CGIT_LOG_PAGE_SIZE;
+    const page = repo.log({ ref, offset, limit });
+    const decorations = buildDecorationMap(repo.references());
+
+    return c.render(
+      <LogPage
+        name={disc.name}
+        ref={ref}
+        commits={page.commits}
+        decorations={decorations}
+        offset={offset}
+        limit={limit}
+        hasMore={page.hasMore}
+        now={new Date()}
+      />,
+    );
+  });
 
   app.notFound((c) => {
     c.status(404);
@@ -37,12 +113,7 @@ export function createApp() {
   return app;
 }
 
-const app = createApp();
-// Config is read once from the environment and injected as Bindings (c.env)
-// on every request.
-const config = loadConfig();
-
 export default {
   port: Number(process.env.PORT ?? 3000),
-  fetch: (req: Request) => app.fetch(req, config),
+  fetch: (req: Request) => createApp().fetch(req, loadConfig()),
 };

@@ -4,7 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Hono, type Handler } from "hono";
 import { createFixtureRepo, type FixtureRepo } from "../fixtures/repo";
-import { resolveRepo, type RepoEnv } from "../../src/app/repo";
+import { useRepository } from "../../src/middlewares";
+import type { Env } from "../../src/app/env";
 import type { SiteConfig } from "../../src/config/config";
 
 let fixture: FixtureRepo;
@@ -16,16 +17,16 @@ beforeAll(async () => {
   root = mkdtempSync(join(tmpdir(), "cgit-ts-resolver-"));
   await Bun.spawn(["cp", "-r", fixture.path, join(root, "project.git")]).exited;
   cfg = {
-    scanPath: root, summaryBranches: 10, summaryTags: 10,
-    summaryLog: 10, logPageSize: 2, repolistPageSize: 50,
+    CGIT_SCAN_PATH: root, CGIT_SUMMARY_BRANCHES: 10, CGIT_SUMMARY_TAGS: 10,
+    CGIT_SUMMARY_LOG: 10, CGIT_LOG_PAGE_SIZE: 2, CGIT_REPOLIST_PAGE_SIZE: 50,
   };
 });
 
 afterAll(() => { fixture?.cleanup(); rmSync(root, { recursive: true, force: true }); });
 
-function appWith(handler: Handler<RepoEnv>) {
-  const app = new Hono<RepoEnv>();
-  app.use("/:repo/*", resolveRepo());
+function appWith(handler: Handler<Env>) {
+  const app = new Hono<Env>();
+  app.use("/:repo/*", useRepository);
   app.get("/:repo/", handler);
   app.get("/:repo", handler);
   app.onError((err, c) => c.text(err.message, 404));

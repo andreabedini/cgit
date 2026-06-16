@@ -1,11 +1,27 @@
 import { test, expect } from "bun:test";
 import { Hono, type Handler } from "hono";
-import { renderer } from "../../src/views/default/renderer";
+import { renderer, repoLayout } from "../../src/views/default/renderer";
+import type { Env } from "../../src/app/env";
 
 function appWith(body: Handler) {
   const app = new Hono();
   app.use(renderer);
   app.get("/", body);
+  return app;
+}
+
+// Mount the nested repo layout with a stub `disc` in context, the way
+// useRepository would provide it in the real app.
+function repoApp() {
+  const app = new Hono<Env>();
+  app.use(renderer);
+  app.use("/:repo/*", repoLayout);
+  app.use("/:repo/*", async (c, next) => {
+    c.set("disc", { name: c.req.param("repo")!, path: "" });
+    await next();
+  });
+  app.get("/:repo/", (c) => c.render(<p>x</p>));
+  app.get("/:repo/log/", (c) => c.render(<p>x</p>));
   return app;
 }
 
@@ -32,17 +48,21 @@ test("renderer hoists a page <title> into <head>", async () => {
   expect(head).toContain("<title>My Title</title>");
 });
 
-test("renderer shows the repo nav menu with the active tab", async () => {
-  const app = appWith((c) =>
-    c.render(<p>x</p>, { repoNav: { name: "alpha", active: "log" } }),
-  );
-  const html = await (await app.request("/")).text();
+test("repo layout nests the menu inside the root chrome, marking the active tab", async () => {
+  const html = await (await repoApp().request("/alpha/log/")).text();
+  expect(html).toContain("<!DOCTYPE html>"); // wrapped by the parent layout
   expect(html).toContain('href="/alpha/"');
   expect(html).toContain('href="/alpha/log/"');
-  expect(html).toContain('class="menu-item active"');
+  // The log link is the active one on /alpha/log/.
+  expect(html).toContain('class="menu-item active" href="/alpha/log/"');
 });
 
-test("renderer omits the repo nav when no repoNav is given", async () => {
+test("repo layout marks summary active on the repo index", async () => {
+  const html = await (await repoApp().request("/alpha/")).text();
+  expect(html).toContain('class="menu-item active" href="/alpha/"');
+});
+
+test("root renderer omits the repo nav", async () => {
   const app = appWith((c) => c.render(<p>x</p>));
   const html = await (await app.request("/")).text();
   expect(html).not.toContain("terminal-menu");

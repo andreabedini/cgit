@@ -1,36 +1,55 @@
 import { test, expect } from "bun:test";
 import { SummaryPage } from "../../src/views/default/SummaryPage";
 import { LogPage } from "../../src/views/default/LogPage";
-import type { SummaryViewModel, LogViewModel } from "../../src/viewmodels";
+import type { Commit, Reference } from "../../src/git/facade";
+
+const now = new Date("2026-06-05T12:00:00Z");
+const when = new Date("2026-06-04T12:00:00Z"); // 1 day before `now`
+
+function ref(name: string, kind: "branch" | "tag", oid: string): Reference {
+  return { name, kind, fullName: `refs/${kind === "branch" ? "heads" : "tags"}/${name}`, targetOid: oid, commitOid: oid };
+}
+
+function commit(oid: string, summary: string): Commit {
+  return {
+    oid, abbrevOid: oid.slice(0, 10),
+    author: { name: "Ann", email: "a@x.io", when },
+    committer: { name: "Ann", email: "a@x.io", when },
+    summary, message: summary + "\n", parents: [],
+  };
+}
 
 test("SummaryPage renders branches, tags, recent log and escaped about", () => {
-  const vm: SummaryViewModel = {
-    repo: { name: "alpha", description: "the alpha repo" },
-    branches: [{ name: "main", kind: "branch", commitOid: "a".repeat(40), abbrevOid: "aaaaaaaaaa" }],
-    tags: [{ name: "v1.0", kind: "tag", commitOid: "a".repeat(40), abbrevOid: "aaaaaaaaaa" }],
-    recentCommits: [{ abbrevOid: "aaaaaaaaaa", subject: "Add <x>", authorName: "Ann", ageLabel: "1 day ago", decorations: [] }],
+  const html = SummaryPage({
+    name: "alpha",
+    description: "the alpha repo",
+    branches: [ref("main", "branch", "a".repeat(40))],
+    tags: [ref("v1.0", "tag", "a".repeat(40))],
+    recentCommits: [commit("a".repeat(40), "Add <x>")],
     cloneUrls: ["https://example.com/alpha.git"],
     about: "# Title & stuff",
-  };
-  const html = SummaryPage({ vm }).toString();
+    now,
+  }).toString();
   expect(html).toContain("main");
   expect(html).toContain("v1.0");
   expect(html).toContain("Add &lt;x&gt;");
   expect(html).toContain("# Title &amp; stuff"); // about escaped as plain text
   expect(html).toContain("https://example.com/alpha.git");
+  expect(html).toContain("1 day ago");
 });
 
 test("LogPage renders rows, decorations and pager links", () => {
-  const vm: LogViewModel = {
-    repo: { name: "alpha" },
+  const oid = "a".repeat(40);
+  const html = LogPage({
+    name: "alpha",
     ref: "main",
-    rows: [{
-      abbrevOid: "aaaaaaaaaa", subject: "Add a", authorName: "Ann", ageLabel: "1 day ago",
-      decorations: [{ name: "main", kind: "branch", commitOid: "a".repeat(40), abbrevOid: "aaaaaaaaaa" }],
-    }],
-    pager: { offset: 50, limit: 50, hasPrev: true, hasNext: true },
-  };
-  const html = LogPage({ vm }).toString();
+    commits: [commit(oid, "Add a")],
+    decorations: new Map([[oid, [ref("main", "branch", oid)]]]),
+    offset: 50,
+    limit: 50,
+    hasMore: true,
+    now,
+  }).toString();
   expect(html).toContain("Add a");
   expect(html).toContain("main");
   expect(html).toContain("/alpha/log/");

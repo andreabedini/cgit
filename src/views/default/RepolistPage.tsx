@@ -1,6 +1,12 @@
-import type { RepolistViewModel } from "../../viewmodels";
+import type { DiscoveredRepo } from "../../git/scan";
+import { formatAge } from "../../format";
 
-export function RepolistPage(props: { vm: RepolistViewModel }) {
+export interface RepoListEntry {
+  repo: DiscoveredRepo;
+  lastCommit?: Date;
+}
+
+export function RepolistPage(props: { entries: RepoListEntry[]; now: Date }) {
   return (
     <>
       <title>Repositories</title>
@@ -14,14 +20,14 @@ export function RepolistPage(props: { vm: RepolistViewModel }) {
           </tr>
         </thead>
         <tbody>
-          {props.vm.repos.map((r) => (
+          {props.entries.map(({ repo, lastCommit }) => (
             <tr>
               <td>
-                <a href={`/${r.name}/`}>{r.name}</a>
+                <a href={`/${repo.name}/`}>{repo.name}</a>
               </td>
-              <td>{r.description ?? ""}</td>
-              <td>{r.owner ?? ""}</td>
-              <td>{r.lastCommitAge ?? ""}</td>
+              <td>{repo.description ?? ""}</td>
+              <td>{repo.owner ?? ""}</td>
+              <td>{lastCommit ? formatAge(lastCommit, props.now) : ""}</td>
             </tr>
           ))}
         </tbody>

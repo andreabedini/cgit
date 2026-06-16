@@ -1,19 +1,16 @@
 import { test, expect } from "bun:test";
 import { RepolistPage } from "../../src/views/default/RepolistPage";
-import type { RepolistViewModel } from "../../src/viewmodels";
 
-function render(node: any): string {
-  return node.toString(); // hono/jsx server nodes stringify to HTML
-}
+const now = new Date("2026-06-05T12:00:00Z");
 
 test("RepolistPage renders rows and escapes descriptions", () => {
-  const vm: RepolistViewModel = {
-    repos: [
-      { name: "alpha", description: "first <repo>", lastCommitAge: "2 days ago" },
-      { name: "beta" },
+  const html = RepolistPage({
+    entries: [
+      { repo: { name: "alpha", path: "/x/alpha.git", description: "first <repo>" }, lastCommit: new Date("2026-06-03T12:00:00Z") },
+      { repo: { name: "beta", path: "/x/beta.git" } },
     ],
-  };
-  const html = render(RepolistPage({ vm }));
+    now,
+  }).toString();
   expect(html).toContain("alpha");
   expect(html).toContain("2 days ago");
   expect(html).toContain("first &lt;repo&gt;"); // escaped
