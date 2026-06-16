@@ -7,3 +7,21 @@ export function isBinary(bytes: Uint8Array): boolean {
   }
   return false;
 }
+
+export type BlobKind = "text" | "binary" | "image";
+
+// Decide how to render a blob from its bytes and (optional) MIME type:
+//  - image/*            -> image
+//  - other non-text/*   -> binary (e.g. application/pdf)
+//  - text/*             -> text (decoded)
+//  - no MIME match      -> isBinary heuristic decides text vs binary
+// Text is decoded only when the result is text.
+export function classifyBlob(
+  bytes: Uint8Array,
+  mime: string | undefined,
+): { kind: BlobKind; text?: string } {
+  if (mime?.startsWith("image/")) return { kind: "image" };
+  if (mime && !mime.startsWith("text/")) return { kind: "binary" };
+  if (!mime && isBinary(bytes)) return { kind: "binary" };
+  return { kind: "text", text: new TextDecoder().decode(bytes) };
+}
