@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { createFixtureRepo, type FixtureRepo } from "./fixtures/repo";
 import { createApp } from "../src/server";
 import type { SiteConfig } from "../src/config/config";
+import { DEFAULT_MIME_TYPES } from "../src/config/config";
 
 let fixture: FixtureRepo;
 let root: string;
@@ -22,6 +23,7 @@ beforeAll(async () => {
   cfg = {
     CGIT_SCAN_PATH: root, CGIT_SUMMARY_BRANCHES: 10, CGIT_SUMMARY_TAGS: 10,
     CGIT_SUMMARY_LOG: 10, CGIT_LOG_PAGE_SIZE: 2, CGIT_REPOLIST_PAGE_SIZE: 50,
+    mimeTypes: DEFAULT_MIME_TYPES,
   };
 });
 
@@ -112,6 +114,18 @@ test("GET /project/tree redirects to the trailing-slash form", async () => {
   const res = await req("/project/tree");
   expect(res.status).toBe(301);
   expect(new URL(res.headers.get("location")!, "http://localhost").pathname).toBe("/project/tree/");
+});
+
+test("GET /project/tree/main/icon.gif renders an inline image", async () => {
+  const html = await (await req("/project/tree/main/icon.gif")).text();
+  expect(html).toContain("<img");
+  expect(html).toContain('src="/project/raw/main/icon.gif"');
+});
+
+test("GET /project/raw/main/icon.gif serves image/gif", async () => {
+  const res = await req("/project/raw/main/icon.gif");
+  expect(res.status).toBe(200);
+  expect(res.headers.get("content-type")).toBe("image/gif");
 });
 
 test("GET /cgit.css serves the stylesheet", async () => {

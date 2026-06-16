@@ -6,6 +6,7 @@ import { notFound, statusForError } from "./errors";
 import { openRepository } from "./git";
 import { scanRepos } from "./git/scan";
 import { isBinary, classifyBlob } from "./blob";
+import { mimeForPath } from "./mime";
 import { splitRefPath } from "./git/refpath";
 import { BlobPage } from "./views/default/BlobPage";
 import { TreePage } from "./views/default/TreePage";
@@ -125,7 +126,7 @@ export function createApp() {
     }
     const bytes = repo.readFileAtRef(ref, path);
     if (bytes !== null) {
-      const { kind, text } = classifyBlob(bytes, undefined);
+      const { kind, text } = classifyBlob(bytes, mimeForPath(path, c.env.mimeTypes));
       return c.render(
         <BlobPage name={disc.name} ref={ref} path={path} kind={kind} text={text} size={bytes.length} />,
       );
@@ -146,9 +147,9 @@ export function createApp() {
 
     const bytes = repo.readFileAtRef(ref, path);
     if (bytes === null) throw notFound(`Path not found: ${path}`);
-    const contentType = isBinary(bytes)
-      ? "application/octet-stream"
-      : "text/plain; charset=utf-8";
+    const contentType =
+      mimeForPath(path, c.env.mimeTypes) ??
+      (isBinary(bytes) ? "application/octet-stream" : "text/plain; charset=utf-8");
     return new Response(bytes, { headers: { "Content-Type": contentType } });
   });
 
@@ -168,7 +169,11 @@ export function createApp() {
   return app;
 }
 
+// Load config once at startup (it now reads a file); a malformed config fails
+// fast here rather than per request.
+const config = loadConfig();
+
 export default {
   port: Number(process.env.PORT ?? 3000),
-  fetch: (req: Request) => createApp().fetch(req, loadConfig()),
+  fetch: (req: Request) => createApp().fetch(req, config),
 };
