@@ -34,3 +34,14 @@ test("loadConfig throws on a malformed YAML config", () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("loadConfig throws when the mimetype section is not a mapping", () => {
+  const dir = mkdtempSync(join(tmpdir(), "cgit-cfg-"));
+  try {
+    const file = join(dir, "cgit.yaml");
+    writeFileSync(file, "mimetype: not-a-mapping\n");
+    expect(() => loadConfig({ CGIT_CONFIG: file })).toThrow();
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -39,9 +39,13 @@ function loadMimeTypes(env: Record<string, string | undefined>): Record<string, 
     if ((e as { code?: string }).code === "ENOENT") return { ...DEFAULT_MIME_TYPES };
     throw e;
   }
-  const doc = YAML.parse(text) as { mimetype?: Record<string, string> } | null;
+  const doc = YAML.parse(text) as { mimetype?: unknown } | null;
+  const raw = doc?.mimetype;
+  if (raw != null && (typeof raw !== "object" || Array.isArray(raw))) {
+    throw new TypeError("cgit config: 'mimetype' must be a mapping of extension to MIME type");
+  }
   const merged: Record<string, string> = { ...DEFAULT_MIME_TYPES };
-  for (const [ext, type] of Object.entries(doc?.mimetype ?? {})) {
+  for (const [ext, type] of Object.entries((raw as Record<string, string>) ?? {})) {
     merged[ext.toLowerCase()] = type;
   }
   return merged;
