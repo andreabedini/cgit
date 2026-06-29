@@ -55,7 +55,7 @@ export function CommitPage(props: CommitProps) {
               <td>
                 {props.commit.parents.map((parent, i) => (
                   <>
-                    {i ? <span> </span> : null}
+                    {i ? " " : null}
                     <a href={commitHref(props.name, parent)}>
                       <code>{parent.slice(0, 10)}</code>
                     </a>
