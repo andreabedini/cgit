@@ -38,6 +38,7 @@ test("CommitPage hoists its title and renders metadata links", async () => {
   expect(html).toContain("ann@example.com");
   expect(html).toContain('href="/proj/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/"');
   expect(html).toContain('href="/proj/tree/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/"');
+  expect(html).toContain('href="/proj/diff/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/"');
   expect(html).toContain('class="ref branch"');
   expect(html).toContain("Body line");
 });

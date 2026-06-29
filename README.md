@@ -6,7 +6,7 @@ repository data directly through **libgit2** (via Bun's FFI) — no `git` subpro
 native build step.
 
 > **Status:** early. The walking skeleton is in place — repository index, per-repo
-> summary, and commit log — with more cgit pages (tree, commit, diff, refs) still to come.
+> summary, log, tree, commit, and diff pages — with refs still to come.
 
 ## Requirements
 

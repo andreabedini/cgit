@@ -11,6 +11,7 @@ import { mimeForPath } from "./mime";
 import { splitRefPath } from "./git/refpath";
 import { BlobPage } from "./views/default/BlobPage";
 import { CommitPage } from "./views/default/CommitPage";
+import { DiffPage } from "./views/default/DiffPage";
 import { TreePage } from "./views/default/TreePage";
 import { buildDecorationMap, useRepository } from "./middlewares";
 import { ErrorPage } from "./views/default/ErrorPage";
@@ -118,6 +119,16 @@ export function createApp() {
     if (!commit) throw notFound(`Commit not found: ${c.req.param("rev")}`);
     const refs = buildDecorationMap(repo.references()).get(commit.oid) ?? [];
     return c.render(<CommitPage name={disc.name} commit={commit} refs={refs} now={new Date()} />);
+  });
+
+  app.get("/:repo/diff/:rev/", (c) => {
+    const repo = c.get("repo");
+    const disc = c.get("disc");
+    const commit = repo.commit(c.req.param("rev"));
+    if (!commit) throw notFound(`Commit not found: ${c.req.param("rev")}`);
+    const diff = repo.diff(commit.oid);
+    if (!diff) throw notFound(`Commit not found: ${c.req.param("rev")}`);
+    return c.render(<DiffPage name={disc.name} commit={commit} diff={diff} />);
   });
 
   app.get("/:repo/tree/*", async (c) => {

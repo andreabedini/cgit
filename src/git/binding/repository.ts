@@ -1,4 +1,6 @@
-import type { Repository, Reference, Commit, Signature, LogOptions, LogPage, TreeEntry } from "../facade";
+import type {
+  Repository, Reference, Commit, Signature, LogOptions, LogPage, TreeEntry, CommitDiff, DiffFile, DiffHunk, DiffLine, DiffStatus,
+} from "../facade";
 import {
   lib, ensureInit, ptrSlot, oidSlot, readPtr, cstr, check, toPtr,
   ptr, read, toArrayBuffer, CString,
@@ -11,6 +13,38 @@ const GIT_OBJECT_TREE = 2;
 const GIT_OBJECT_BLOB = 3;
 const GIT_SORT_TIME = 2;
 const GIT_SORT_TOPOLOGICAL = 1;
+const GIT_DIFF_FLAG_BINARY = 1 << 0;
+const GIT_DELTA_ADDED = 1;
+const GIT_DELTA_DELETED = 2;
+const GIT_DELTA_MODIFIED = 3;
+const GIT_DELTA_RENAMED = 4;
+const GIT_DELTA_COPIED = 5;
+const GIT_DELTA_TYPECHANGE = 8;
+const textDecoder = new TextDecoder();
+
+function readI32At(base: number, offset: number): number {
+  const bytes = new Uint8Array(toArrayBuffer(toPtr(base), offset, 4));
+  return new DataView(bytes.buffer, bytes.byteOffset, 4).getInt32(0, true);
+}
+
+function readU16At(base: number, offset: number): number {
+  const bytes = new Uint8Array(toArrayBuffer(toPtr(base), offset, 2));
+  return new DataView(bytes.buffer, bytes.byteOffset, 2).getUint16(0, true);
+}
+
+function readU32At(base: number, offset: number): number {
+  const bytes = new Uint8Array(toArrayBuffer(toPtr(base), offset, 4));
+  return new DataView(bytes.buffer, bytes.byteOffset, 4).getUint32(0, true);
+}
+
+function readU64At(base: number, offset: number): number {
+  const bytes = new Uint8Array(toArrayBuffer(toPtr(base), offset, 8));
+  return Number(new DataView(bytes.buffer, bytes.byteOffset, 8).getBigUint64(0, true));
+}
+
+function readByteAt(base: number, offset: number): number {
+  return new Uint8Array(toArrayBuffer(toPtr(base), offset, 1))[0] ?? 0;
+}
 
 class Repo implements Repository {
   constructor(readonly path: string, private handle: number) {}
@@ -135,6 +169,58 @@ class Repo implements Repository {
     }
   }
 
+  diff(rev: string): CommitDiff | null {
+    const objSlot = ptrSlot();
+    const rc = lib.git_revparse_single(toPtr(ptr(objSlot)), toPtr(this.handle), cstr(rev));
+    if (rc === -3 /* GIT_ENOTFOUND */) return null;
+    check(rc);
+    const obj = readPtr(objSlot);
+    try {
+      const commitSlot = ptrSlot();
+      check(lib.git_object_peel(toPtr(ptr(commitSlot)), toPtr(obj), GIT_OBJECT_COMMIT));
+      const commitObj = readPtr(commitSlot);
+      try {
+        const newTree = this.lookupCommitTree(commitObj);
+        let oldTree = 0;
+        try {
+          if (lib.git_commit_parentcount(toPtr(commitObj)) > 0) {
+            const parentSlot = ptrSlot();
+            check(lib.git_commit_parent(toPtr(ptr(parentSlot)), toPtr(commitObj), 0));
+            const parent = readPtr(parentSlot);
+            try {
+              oldTree = this.lookupCommitTree(parent);
+            } finally {
+              lib.git_commit_free(toPtr(parent));
+            }
+          }
+          const diffSlot = ptrSlot();
+          check(
+            lib.git_diff_tree_to_tree(
+              toPtr(ptr(diffSlot)),
+              toPtr(this.handle),
+              toPtr(oldTree),
+              toPtr(newTree),
+              toPtr(0),
+            ),
+          );
+          const diff = readPtr(diffSlot);
+          try {
+            return { files: this.readDiffFiles(diff) };
+          } finally {
+            lib.git_diff_free(toPtr(diff));
+          }
+        } finally {
+          if (oldTree) lib.git_tree_free(toPtr(oldTree));
+          lib.git_tree_free(toPtr(newTree));
+        }
+      } finally {
+        lib.git_object_free(toPtr(commitObj));
+      }
+    } finally {
+      lib.git_object_free(toPtr(obj));
+    }
+  }
+
   // Resolve a ref spec (branch/tag shorthand, full ref name, or oid) to a commit
   // and push it onto the walk. revparse + peel handles annotated tags correctly
   // (peeling the tag object down to its commit).
@@ -183,6 +269,12 @@ class Repo implements Repository {
     return this.readCommit(Buffer.from(oid, "hex"));
   }
 
+  private lookupCommitTree(commit: number): number {
+    const slot = ptrSlot();
+    check(lib.git_commit_tree(toPtr(ptr(slot)), toPtr(commit)));
+    return readPtr(slot);
+  }
+
   // git_commit_author/committer return a `const git_signature *` with layout
   // { char *name; char *email; git_time { git_time_t time(i64); int offset; char sign; } }.
   // Read name at offset 0, email at offset 8, time (seconds since epoch) at offset 16.
@@ -195,6 +287,120 @@ class Repo implements Repository {
       email: emailPtr ? new CString(toPtr(emailPtr)).toString() : "",
       when: new Date(Number(timeSecs) * 1000),
     };
+  }
+
+  private readDiffFiles(diff: number): DiffFile[] {
+    const files: DiffFile[] = [];
+    const count = Number(lib.git_diff_num_deltas(toPtr(diff)));
+    for (let i = 0; i < count; i++) {
+      const patchSlot = ptrSlot();
+      check(lib.git_patch_from_diff(toPtr(ptr(patchSlot)), toPtr(diff), i));
+      const patch = readPtr(patchSlot);
+      try {
+        const deltaPtr = patch
+          ? Number(lib.git_patch_get_delta(toPtr(patch)))
+          : Number(lib.git_diff_get_delta(toPtr(diff), i));
+        if (!deltaPtr) continue;
+        const delta = this.readDiffDelta(deltaPtr);
+        files.push({
+          ...delta,
+          hunks: patch ? this.readDiffHunks(patch) : [],
+        });
+      } finally {
+        if (patch) lib.git_patch_free(toPtr(patch));
+      }
+    }
+    return files;
+  }
+
+  private readDiffDelta(deltaPtr: number): Omit<DiffFile, "hunks"> {
+    const status = this.readDiffStatus(readI32At(deltaPtr, 0));
+    const flags = readU32At(deltaPtr, 4);
+    const oldFile = this.readDiffSide(deltaPtr + 16);
+    const newFile = this.readDiffSide(deltaPtr + 64);
+    return {
+      status,
+      oldPath: oldFile.path,
+      newPath: newFile.path,
+      binary: Boolean((flags | oldFile.flags | newFile.flags) & GIT_DIFF_FLAG_BINARY),
+    };
+  }
+
+  private readDiffSide(sidePtr: number): { path: string | null; flags: number; mode: number } {
+    const pathPtr = Number(read.ptr(toPtr(sidePtr), 24));
+    return {
+      path: pathPtr ? new CString(toPtr(pathPtr)).toString() : null,
+      flags: readU32At(sidePtr, 40),
+      mode: readU16At(sidePtr, 44),
+    };
+  }
+
+  private readDiffStatus(status: number): DiffStatus {
+    switch (status) {
+      case GIT_DELTA_ADDED:
+        return "added";
+      case GIT_DELTA_DELETED:
+        return "deleted";
+      case GIT_DELTA_MODIFIED:
+        return "modified";
+      case GIT_DELTA_RENAMED:
+        return "renamed";
+      case GIT_DELTA_COPIED:
+        return "copied";
+      case GIT_DELTA_TYPECHANGE:
+        return "typechange";
+      default:
+        return "modified";
+    }
+  }
+
+  private readDiffHunks(patch: number): DiffHunk[] {
+    const hunks: DiffHunk[] = [];
+    const count = Number(lib.git_patch_num_hunks(toPtr(patch)));
+    for (let hunkIndex = 0; hunkIndex < count; hunkIndex++) {
+      const hunkSlot = ptrSlot();
+      const linesSlot = ptrSlot();
+      check(lib.git_patch_get_hunk(toPtr(ptr(hunkSlot)), toPtr(ptr(linesSlot)), toPtr(patch), hunkIndex));
+      const hunkPtr = readPtr(hunkSlot);
+      if (!hunkPtr) continue;
+      const lineCount = readU64At(ptr(linesSlot), 0);
+      const header = textDecoder.decode(new Uint8Array(toArrayBuffer(toPtr(hunkPtr), 24, readU64At(hunkPtr, 16)))).replace(/\n$/, "");
+      const lines: DiffLine[] = [];
+      for (let lineIndex = 0; lineIndex < lineCount; lineIndex++) {
+        const lineSlot = ptrSlot();
+        check(lib.git_patch_get_line_in_hunk(toPtr(ptr(lineSlot)), toPtr(patch), hunkIndex, lineIndex));
+        const linePtr = readPtr(lineSlot);
+        if (!linePtr) continue;
+        const origin = String.fromCharCode(readByteAt(linePtr, 0));
+        const contentLen = readU64At(linePtr, 16);
+        const contentPtr = Number(read.ptr(toPtr(linePtr), 32));
+        const content =
+          contentPtr && contentLen
+            ? textDecoder.decode(new Uint8Array(toArrayBuffer(toPtr(contentPtr), 0, contentLen))).replace(/\n$/, "")
+            : "";
+        lines.push({
+          type: this.readDiffLineType(origin),
+          oldLineNo: readI32At(linePtr, 4) >= 0 ? readI32At(linePtr, 4) : null,
+          newLineNo: readI32At(linePtr, 8) >= 0 ? readI32At(linePtr, 8) : null,
+          content,
+        });
+      }
+      hunks.push({
+        header,
+        oldStart: readI32At(hunkPtr, 0),
+        oldLines: readI32At(hunkPtr, 4),
+        newStart: readI32At(hunkPtr, 8),
+        newLines: readI32At(hunkPtr, 12),
+        lines,
+      });
+    }
+    return hunks;
+  }
+
+  private readDiffLineType(origin: string): DiffLine["type"] {
+    if (origin === "+" || origin === ">") return "add";
+    if (origin === "-" || origin === "<") return "delete";
+    return "context";
   }
 
   readFileAtRef(ref: string, path: string): Uint8Array | null {

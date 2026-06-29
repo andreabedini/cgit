@@ -6,11 +6,13 @@ import { createFixtureRepo, type FixtureRepo } from "./fixtures/repo";
 import { createApp } from "../src/server";
 import type { SiteConfig } from "../src/config/config";
 import { DEFAULT_MIME_TYPES } from "../src/config/config";
+import { openRepository } from "../src/git";
 
 let fixture: FixtureRepo;
 let root: string;
 let app: ReturnType<typeof createApp>;
 let cfg: SiteConfig;
+let commitOids: string[];
 
 // Config rides on the request as Bindings (c.env); inject it on every request.
 const req = (path: string) => app.request(path, undefined, cfg);
@@ -25,6 +27,12 @@ beforeAll(async () => {
     CGIT_SUMMARY_LOG: 10, CGIT_LOG_PAGE_SIZE: 2, CGIT_REPOLIST_PAGE_SIZE: 50,
     mimeTypes: DEFAULT_MIME_TYPES,
   };
+  const repo = openRepository(join(root, "project.git"));
+  try {
+    commitOids = repo.log({ limit: 10 }).commits.map((commit) => commit.oid);
+  } finally {
+    repo.free();
+  }
 });
 
 afterAll(() => { fixture?.cleanup(); rmSync(root, { recursive: true, force: true }); });
@@ -60,6 +68,25 @@ test("GET /project/commit/:oid/ renders commit metadata and message", async () =
   expect(html).toContain("Add b.txt");
   expect(html).toContain("author@example.com");
   expect(html).toContain("/project/tree/");
+  expect(html).toContain("/project/diff/");
+});
+
+test("GET /project/diff/:oid/ renders the commit diff", async () => {
+  const html = await (await req(`/project/diff/${commitOids[0]}/`)).text();
+  expect(html).toContain("b.txt");
+  expect(html).toContain("second");
+  expect(html).toContain("Binary file changed.");
+});
+
+test("GET /project/diff/:oid/ renders root-commit additions", async () => {
+  const html = await (await req(`/project/diff/${commitOids.at(-1)!}/`)).text();
+  expect(html).toContain("README.md");
+  expect(html).toContain("Fixture");
+});
+
+test("GET /project/diff/v1.0/ resolves a tag revision", async () => {
+  const html = await (await req("/project/diff/v1.0/")).text();
+  expect(html).toContain("a.txt");
 });
 
 test("GET /missing/ 404s", async () => {

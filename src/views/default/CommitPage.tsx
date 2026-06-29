@@ -15,6 +15,7 @@ function commitHref(name: string, oid: string): string {
 
 export function CommitPage(props: CommitProps) {
   const treeHref = `/${encodeURIComponent(props.name)}/tree/${encodeSegments(props.commit.oid)}/`;
+  const diffHref = `/${encodeURIComponent(props.name)}/diff/${encodeURIComponent(props.commit.oid)}/`;
   return (
     <>
       <title>{`${props.name}: commit ${props.commit.abbrevOid}`}</title>
@@ -68,6 +69,12 @@ export function CommitPage(props: CommitProps) {
             <th>tree</th>
             <td>
               <a href={treeHref}>browse files</a>
+            </td>
+          </tr>
+          <tr>
+            <th>diff</th>
+            <td>
+              <a href={diffHref}>view diff</a>
             </td>
           </tr>
         </tbody>

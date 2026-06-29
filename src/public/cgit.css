@@ -108,3 +108,35 @@ pre.about {
 .blob-image {
   max-width: 100%;
 }
+
+.diff-file {
+  margin: 1.5em 0;
+}
+
+.diff-file-meta {
+  color: var(--secondary-color);
+}
+
+.diff-hunk {
+  padding: 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.diff-line {
+  display: block;
+  padding: 0 1em;
+}
+
+.diff-line.hunk {
+  color: var(--secondary-color);
+  background: var(--code-bg-color);
+}
+
+.diff-line.add {
+  background: rgba(46, 160, 67, 0.15);
+}
+
+.diff-line.delete {
+  background: rgba(248, 81, 73, 0.15);
+}

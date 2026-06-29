@@ -42,7 +42,7 @@ function RepoNav() {
   const active =
     path.includes("/tree/") || path.includes("/raw/")
       ? "tree"
-      : path.includes("/commit/")
+      : path.includes("/commit/") || path.includes("/diff/")
         ? "log"
       : path.endsWith("/log/")
         ? "log"

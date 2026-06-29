@@ -14,6 +14,36 @@ export interface Commit {
   parents: string[];
 }
 
+export type DiffStatus = "added" | "deleted" | "modified" | "renamed" | "copied" | "typechange";
+
+export interface DiffLine {
+  type: "context" | "add" | "delete";
+  oldLineNo: number | null;
+  newLineNo: number | null;
+  content: string;
+}
+
+export interface DiffHunk {
+  header: string;
+  oldStart: number;
+  oldLines: number;
+  newStart: number;
+  newLines: number;
+  lines: DiffLine[];
+}
+
+export interface DiffFile {
+  status: DiffStatus;
+  oldPath: string | null;
+  newPath: string | null;
+  binary: boolean;
+  hunks: DiffHunk[];
+}
+
+export interface CommitDiff {
+  files: DiffFile[];
+}
+
 export type RefKind = "branch" | "tag";
 
 export interface Reference {
@@ -50,6 +80,8 @@ export interface Repository {
   log(opts: LogOptions): LogPage;
   /** Resolves a revision (ref or oid) to a single commit, or null if missing. */
   commit(rev: string): Commit | null;
+  /** Diffs a commit against its first parent, or the empty tree for root commits. */
+  diff(rev: string): CommitDiff | null;
   /** Returns null if the path (or ref) was not found in the tree. */
   readFileAtRef(ref: string, path: string): Uint8Array | null;
   /** Lists a tree at `ref`/`path`. Returns null if the path is not a tree

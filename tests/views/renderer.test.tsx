@@ -22,6 +22,7 @@ function repoApp() {
   });
   app.get("/:repo/", (c) => c.render(<p>x</p>));
   app.get("/:repo/log/", (c) => c.render(<p>x</p>));
+  app.get("/:repo/diff/:rev/", (c) => c.render(<p>x</p>));
   return app;
 }
 
@@ -60,6 +61,11 @@ test("repo layout nests the menu inside the root chrome, marking the active tab"
 test("repo layout marks summary active on the repo index", async () => {
   const html = await (await repoApp().request("/alpha/")).text();
   expect(html).toContain('class="menu-item active" href="/alpha/"');
+});
+
+test("repo layout marks log active on the diff view", async () => {
+  const html = await (await repoApp().request("/alpha/diff/main/")).text();
+  expect(html).toContain('class="menu-item active" href="/alpha/log/"');
 });
 
 test("root renderer omits the repo nav", async () => {
