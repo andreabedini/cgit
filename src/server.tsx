@@ -10,6 +10,7 @@ import { highlightBlob } from "./highlight";
 import { mimeForPath } from "./mime";
 import { splitRefPath } from "./git/refpath";
 import { BlobPage } from "./views/default/BlobPage";
+import { CommitPage } from "./views/default/CommitPage";
 import { TreePage } from "./views/default/TreePage";
 import { buildDecorationMap, useRepository } from "./middlewares";
 import { ErrorPage } from "./views/default/ErrorPage";
@@ -108,6 +109,15 @@ export function createApp() {
         now={new Date()}
       />,
     );
+  });
+
+  app.get("/:repo/commit/:rev/", (c) => {
+    const repo = c.get("repo");
+    const disc = c.get("disc");
+    const commit = repo.commit(c.req.param("rev"));
+    if (!commit) throw notFound(`Commit not found: ${c.req.param("rev")}`);
+    const refs = buildDecorationMap(repo.references()).get(commit.oid) ?? [];
+    return c.render(<CommitPage name={disc.name} commit={commit} refs={refs} now={new Date()} />);
   });
 
   app.get("/:repo/tree/*", async (c) => {

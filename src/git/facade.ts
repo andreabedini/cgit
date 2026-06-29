@@ -48,6 +48,8 @@ export interface Repository {
   headRef(): string;
   references(): Reference[];
   log(opts: LogOptions): LogPage;
+  /** Resolves a revision (ref or oid) to a single commit, or null if missing. */
+  commit(rev: string): Commit | null;
   /** Returns null if the path (or ref) was not found in the tree. */
   readFileAtRef(ref: string, path: string): Uint8Array | null;
   /** Lists a tree at `ref`/`path`. Returns null if the path is not a tree

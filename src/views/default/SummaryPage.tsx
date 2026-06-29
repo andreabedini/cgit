@@ -1,14 +1,17 @@
 import type { Commit, Reference } from "../../git/facade";
 import { abbrevOid, formatAge } from "../../format";
 
-function RefList(props: { title: string; refs: Reference[] }) {
+function RefList(props: { name: string; title: string; refs: Reference[] }) {
   return (
     <section>
       <h3>{props.title}</h3>
       <ul>
         {props.refs.map((r) => (
           <li>
-            {r.name} <code>{abbrevOid(r.commitOid)}</code>
+            {r.name}{" "}
+            <a href={`/${encodeURIComponent(props.name)}/commit/${encodeURIComponent(r.commitOid)}/`}>
+              <code>{abbrevOid(r.commitOid)}</code>
+            </a>
           </li>
         ))}
       </ul>
@@ -33,8 +36,8 @@ export function SummaryPage(props: SummaryProps) {
       <title>{props.name}</title>
       <h2>{props.name}</h2>
       {props.description ? <p>{props.description}</p> : null}
-      <RefList title="Branches" refs={props.branches} />
-      <RefList title="Tags" refs={props.tags} />
+      <RefList name={props.name} title="Branches" refs={props.branches} />
+      <RefList name={props.name} title="Tags" refs={props.tags} />
       <section>
         <h3>Recent commits</h3>
         <table class="log">
@@ -42,7 +45,11 @@ export function SummaryPage(props: SummaryProps) {
             {props.recentCommits.map((commit) => (
               <tr>
                 <td>{formatAge(commit.author.when, props.now)}</td>
-                <td>{commit.summary}</td>
+                <td>
+                  <a href={`/${encodeURIComponent(props.name)}/commit/${encodeURIComponent(commit.oid)}/`}>
+                    {commit.summary}
+                  </a>
+                </td>
                 <td>{commit.author.name}</td>
               </tr>
             ))}

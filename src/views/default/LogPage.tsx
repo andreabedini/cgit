@@ -60,7 +60,9 @@ export function LogPage(props: LogProps) {
             <tr>
               <td>{formatAge(commit.author.when, props.now)}</td>
               <td>
-                <code>{commit.abbrevOid}</code> {commit.summary}
+                <a href={`/${encodeURIComponent(props.name)}/commit/${encodeURIComponent(commit.oid)}/`}>
+                  <code>{commit.abbrevOid}</code> {commit.summary}
+                </a>
               </td>
               <td>{commit.author.name}</td>
               <td>

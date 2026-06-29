@@ -47,7 +47,19 @@ test("GET /project/ shows refs and about", async () => {
 test("GET /project/log/ paginates", async () => {
   const html = await (await req("/project/log/")).text();
   expect(html).toContain("Add b.txt");
+  expect(html).toContain("/project/commit/");
   expect(html).toContain("older"); // hasNext pager (page size 2, 3 commits)
+});
+
+test("GET /project/commit/:oid/ renders commit metadata and message", async () => {
+  const logHtml = await (await req("/project/log/")).text();
+  const href = logHtml.match(/href="(\/project\/commit\/[0-9a-f]{40}\/)"/)?.[1];
+  expect(href).toBeTruthy();
+
+  const html = await (await req(href!)).text();
+  expect(html).toContain("Add b.txt");
+  expect(html).toContain("author@example.com");
+  expect(html).toContain("/project/tree/");
 });
 
 test("GET /missing/ 404s", async () => {

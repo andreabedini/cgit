@@ -114,6 +114,27 @@ class Repo implements Repository {
     }
   }
 
+  commit(rev: string): Commit | null {
+    const objSlot = ptrSlot();
+    const rc = lib.git_revparse_single(toPtr(ptr(objSlot)), toPtr(this.handle), cstr(rev));
+    if (rc === -3 /* GIT_ENOTFOUND */) return null;
+    check(rc);
+    const obj = readPtr(objSlot);
+    try {
+      const commitSlot = ptrSlot();
+      check(lib.git_object_peel(toPtr(ptr(commitSlot)), toPtr(obj), GIT_OBJECT_COMMIT));
+      const commitObj = readPtr(commitSlot);
+      try {
+        const oidPtr = Number(lib.git_object_id(toPtr(commitObj)));
+        return this.readCommitHex(String(lib.git_oid_tostr_s(toPtr(oidPtr))));
+      } finally {
+        lib.git_object_free(toPtr(commitObj));
+      }
+    } finally {
+      lib.git_object_free(toPtr(obj));
+    }
+  }
+
   // Resolve a ref spec (branch/tag shorthand, full ref name, or oid) to a commit
   // and push it onto the walk. revparse + peel handles annotated tags correctly
   // (peeling the tag object down to its commit).
@@ -156,6 +177,10 @@ class Repo implements Repository {
     } finally {
       lib.git_commit_free(toPtr(commit));
     }
+  }
+
+  private readCommitHex(oid: string): Commit {
+    return this.readCommit(Buffer.from(oid, "hex"));
   }
 
   // git_commit_author/committer return a `const git_signature *` with layout

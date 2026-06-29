@@ -33,6 +33,7 @@ test("SummaryPage renders branches, tags, recent log and escaped about", () => {
   expect(html).toContain("main");
   expect(html).toContain("v1.0");
   expect(html).toContain("Add &lt;x&gt;");
+  expect(html).toContain('/alpha/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/');
   expect(html).toContain("# Title &amp; stuff"); // about escaped as plain text
   expect(html).toContain("https://example.com/alpha.git");
   expect(html).toContain("1 day ago");
@@ -51,6 +52,7 @@ test("LogPage renders rows, decorations and pager links", () => {
     now,
   }).toString();
   expect(html).toContain("Add a");
+  expect(html).toContain("/alpha/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/");
   expect(html).toContain("main");
   expect(html).toContain("/alpha/log/");
   expect(html).toContain("ofs=0");
