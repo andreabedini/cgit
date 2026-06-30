@@ -1,90 +1,687 @@
-/* cgit-ts overlay on top of terminal.css.
-   Loaded after terminal.min.css; only adds the auto dark theme and a few
-   cgit-specific affordances (ref badges, log table layout). */
+/* ==========================================================================
+   cgit-ts — Bedini Homelab skin
+   A Rose Pine–derived dark theme: quiet near-black surfaces, a gold nameplate
+   and a single teal "go" accent. Dark-only by design; this is the sole
+   stylesheet (no Terminal.css). Tokens below are vendored from the Bedini
+   Homelab Design System, followed by the cgit-specific component classes.
+   ========================================================================== */
 
-/* Auto dark theme: flip Terminal.css's CSS variables when the visitor's OS
-   prefers a dark color scheme. Terminal.css is fully variable-driven, so this
-   is all that's needed. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background-color: #222225;
-    --font-color: #e8e9ed;
-    --invert-font-color: #222225;
-    --secondary-color: #a3abba;
-    --tertiary-color: #a3abba;
-    --primary-color: #62c4ff;
-    --error-color: #ff3c74;
-    --progress-bar-background: #3f3f44;
-    --progress-bar-fill: #62c4ff;
-    --code-bg-color: #3f3f44;
-    --block-background-color: #3f3f44;
-  }
+/* ---- Tokens: color ----------------------------------------------------- */
+:root {
+  /* Rose Pine base ramp (moon-leaning) */
+  --rp-base:    #191724;
+  --rp-surface: #1f1d2e;
+  --rp-overlay: #26233a;
+  --rp-hl-low:  #21202e;
+  --rp-hl-med:  #403d52;
+  --rp-hl-high: #524f67;
+  --rp-muted:   #6e6a86;
+  --rp-subtle:  #908caa;
+  --rp-text:    #e0def4;
+  --rp-love:    #eb6f92;
+  --rp-foam:    #9ccfd8;
+  --rp-iris:    #c4a7e7;
+
+  /* Bedini brand gold */
+  --brand-gold:      #dfa84d;
+  --brand-gold-soft: #f0c074;
+  --brand-gold-deep: #b8852f;
+
+  /* Teal action ramp */
+  --teal-700: #1b8a6f;
+  --teal-600: #239a7c;
+  --teal-500: #2bb592;
+  --teal-400: #45c9a6;
+  --teal-300: #74dcc1;
+
+  /* Surfaces */
+  --bg-app:         var(--rp-base);
+  --surface-card:   var(--rp-surface);
+  --surface-raised: var(--rp-overlay);
+  --surface-inset:  var(--rp-hl-low);
+  --surface-hover:  #2a2740;
+
+  /* Borders */
+  --border-subtle:  rgba(224, 222, 244, 0.07);
+  --border-default: var(--rp-hl-med);
+  --border-strong:  var(--rp-hl-high);
+
+  /* Text */
+  --text-strong: var(--rp-text);
+  --text-body:   #cdcae6;
+  --text-muted:  var(--rp-subtle);
+  --text-faint:  var(--rp-muted);
+
+  /* Interactive (teal) */
+  --accent:        var(--teal-500);
+  --accent-hover:  var(--teal-400);
+  --accent-press:  var(--teal-600);
+  --accent-soft:   var(--teal-300);
+  --accent-fg:     #06120e;
+  --accent-ghost:  rgba(43, 181, 146, 0.12);
+
+  /* Brand (gold) */
+  --brand:       var(--brand-gold);
+  --brand-fg:    #1c1306;
+  --brand-ghost: rgba(223, 168, 77, 0.13);
+
+  /* Status */
+  --danger:       var(--rp-love);
+  --danger-ghost: rgba(235, 111, 146, 0.13);
+  --success:      var(--teal-400);
+  --info:         var(--rp-foam);
+  --info-ghost:   rgba(156, 207, 216, 0.13);
+  --link:         var(--rp-foam);
+  --focus-ring:   rgba(116, 220, 193, 0.55);
+
+  /* ---- Tokens: type ---- */
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, Menlo, Consolas, "Liberation Mono", monospace;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --text-xs:  0.75rem;
+  --text-sm:  0.8125rem;
+  --text-base: 0.9375rem;
+  --text-md:  1.0625rem;
+  --text-lg:  1.375rem;
+  --text-xl:  1.75rem;
+  --text-2xl: 2.25rem;
+  --leading-tight: 1.12;
+  --leading-snug: 1.28;
+  --leading-normal: 1.55;
+  --leading-relaxed: 1.7;
+  --tracking-tight: -0.02em;
+  --tracking-caps: 0.14em;
+
+  /* ---- Tokens: spacing ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* ---- Tokens: effects ---- */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.40);
+  --shadow-lg: 0 14px 40px rgba(0, 0, 0, 0.50);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
 }
 
-/* Log / repolist tables read better left-aligned and tight. */
-table.log td,
-table.repolist td {
-  vertical-align: top;
+/* ---- Base ------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; background: var(--bg-app); }
+
+body {
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
-table.log td:first-child,
-table.repolist td:nth-child(4) {
+
+h1, h2, h3, h4 {
+  font-family: var(--font-sans);
+  color: var(--text-strong);
+  font-weight: var(--fw-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin: 0;
+}
+
+::selection { background: rgba(43, 181, 146, 0.28); }
+
+* { scrollbar-width: thin; scrollbar-color: var(--rp-hl-med) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--rp-hl-med);
+  border-radius: var(--radius-pill);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+@keyframes cg-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+/* ---- Shell / header / footer ------------------------------------------ */
+.cg-shell { min-height: 100vh; color: var(--text-body); font-size: var(--text-base); line-height: var(--leading-normal); }
+
+.cg-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgba(25, 23, 36, 0.82);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.cg-header-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+.cg-brand { display: flex; align-items: center; gap: 0.6em; text-decoration: none; }
+.cg-brand svg { flex: none; }
+.cg-wordmark {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-strong);
+  letter-spacing: -0.01em;
+}
+.cg-wordmark .sep { color: var(--text-faint); }
+.cg-cursor {
+  width: 8px;
+  height: 17px;
+  background: var(--accent);
+  display: inline-block;
+  border-radius: 1px;
+  animation: cg-blink 1.1s steps(1) infinite;
+  margin-left: 1px;
+}
+.cg-spacer { flex: 1; }
+
+.cg-search { position: relative; width: 248px; max-width: 36vw; }
+.cg-search .icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+.cg-search input {
+  width: 100%;
+  height: 36px;
+  padding: 0 0.8rem 0 2.1rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-strong);
+  background: var(--surface-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  outline: none;
+}
+.cg-search input:focus { border-color: var(--border-strong); box-shadow: 0 0 0 3px var(--accent-ghost); }
+
+.cg-main { max-width: 1180px; margin: 0 auto; padding: var(--space-8) var(--space-6) var(--space-12); }
+
+.cg-footer { border-top: 1px solid var(--border-subtle); margin-top: var(--space-12); }
+.cg-footer-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.cg-footer-inner .accent { color: var(--brand-gold-soft); }
+
+/* ---- Shared primitives ------------------------------------------------ */
+.cg-link { color: var(--text-strong); text-decoration: none; cursor: pointer; }
+.cg-link:hover { color: var(--accent-hover); }
+
+.cg-hash {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--info);
+  background: var(--info-ghost);
+  padding: 0.08em 0.42em;
+  border-radius: var(--radius-xs);
+  text-decoration: none;
   white-space: nowrap;
-  color: var(--secondary-color);
 }
+a.cg-hash:hover { color: #c4ecf2; background: rgba(156, 207, 216, 0.2); }
 
-/* Inline ref badges on log rows (branch/tag decorations). */
+/* Ref decorations (branch / tag pills) */
 .ref {
-  font-size: 0.8em;
-  padding: 0 0.4em;
-  margin-left: 0.4em;
-  border: 1px solid var(--secondary-color);
-  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0.12em 0.55em;
+  border-radius: var(--radius-pill);
   white-space: nowrap;
 }
-.ref.branch {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-.ref.tag {
-  border-color: var(--secondary-color);
-  color: var(--secondary-color);
+.ref.branch { background: var(--accent-ghost); color: var(--accent-soft); }
+.ref.tag { background: var(--brand-ghost); color: var(--brand-gold-soft); }
+
+.cg-head-pill {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--accent-fg);
+  background: var(--accent);
+  padding: 0.15em 0.4em;
+  border-radius: var(--radius-pill);
 }
 
-/* The About blob is preformatted README text; let it wrap. */
-pre.about {
+.cg-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-raised);
+  color: var(--brand-gold-soft);
+  font-weight: 600;
+  font-size: 11px;
+  border: 1px solid var(--border-default);
+  flex: none;
+}
+
+.cg-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.cg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-body);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 0.45em 0.9em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
+}
+.cg-btn:hover { border-color: var(--border-strong); background: var(--surface-hover); color: var(--text-strong); }
+
+/* ---- Card surface ----------------------------------------------------- */
+.cg-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+/* ---- Index ------------------------------------------------------------ */
+.cg-index-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+.cg-index-head .eyebrow { color: var(--brand-gold-soft); margin-bottom: 0.5em; }
+.cg-index-head h1 { font-size: var(--text-2xl); font-weight: 700; }
+.cg-index-meta { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }
+
+.cg-repogrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-5); }
+
+.cg-repocard {
+  display: block;
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+.cg-repocard:hover { transform: translateY(-2px); border-color: var(--border-strong); box-shadow: var(--shadow-md); }
+.cg-repocard .name {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent-soft);
+}
+.cg-repocard .desc { margin: 0.45em 0 var(--space-4); color: var(--text-muted); font-size: var(--text-sm); line-height: var(--leading-snug); }
+.cg-repocard .meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
+}
+.cg-empty { color: var(--text-muted); font-size: var(--text-sm); }
+
+/* ---- Repo header band + tabs ------------------------------------------ */
+.cg-repohead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+.cg-crumb { font-family: var(--font-mono); font-size: 13px; color: var(--text-faint); margin-bottom: 0.35em; }
+.cg-crumb a { color: var(--text-faint); text-decoration: none; }
+.cg-crumb a:hover { color: var(--text-body); }
+.cg-crumb .slash { color: var(--rp-hl-high); margin: 0 0.4em; }
+.cg-crumb .name { color: var(--accent-soft); }
+.cg-repohead .desc { margin: 0; color: var(--text-muted); font-size: var(--text-sm); max-width: 56ch; }
+
+.cg-clone {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  background: var(--surface-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 0.35em 0.35em 0.35em 0.8em;
+}
+.cg-clone .label { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+.cg-clone .url { font-family: var(--font-mono); font-size: 12px; color: var(--text-body); }
+.cg-clone .copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-default);
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.cg-clone .copy:hover { color: var(--text-strong); border-color: var(--border-strong); }
+
+.cg-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border-default); margin-bottom: var(--space-6); }
+.cg-tab {
+  appearance: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.6rem 0.9rem;
+  font-size: var(--text-base);
+  font-family: var(--font-sans);
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.cg-tab:hover { color: var(--text-body); }
+.cg-tab.active { color: var(--text-strong); border-bottom-color: var(--accent); font-weight: var(--fw-medium); }
+
+/* ---- Summary ---------------------------------------------------------- */
+.cg-summary { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--space-8); align-items: start; }
+.cg-summary .main { min-width: 0; }
+
+.cg-section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: var(--space-3); }
+.cg-section-head h2 { font-size: var(--text-md); font-weight: 600; color: var(--text-strong); letter-spacing: normal; }
+.cg-section-head .more { font-family: var(--font-mono); font-size: 12px; color: var(--accent); text-decoration: none; }
+.cg-section-head .more:hover { color: var(--accent-hover); }
+
+.cg-rowlist { overflow: hidden; margin-bottom: var(--space-8); }
+.cg-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0.7em var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+  text-decoration: none;
+  cursor: pointer;
+}
+.cg-row:first-child { border-top: none; }
+.cg-row:hover { background: var(--surface-hover); }
+.cg-row .subject {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cg-row:hover .subject { color: var(--accent-hover); }
+.cg-row .age { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); white-space: nowrap; }
+
+.cg-readme-head { display: flex; align-items: center; gap: 0.5em; margin: 0 0 var(--space-3); font-size: var(--text-md); font-weight: 600; color: var(--text-strong); letter-spacing: normal; }
+.cg-readme { background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--space-6) var(--space-8); }
+.cg-readme pre {
+  margin: 0;
   white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: var(--leading-relaxed);
+  color: var(--text-body);
+}
+/* README is highlighted via Shiki: suppress its baked-in light-theme panel
+   background and force the dark token colours, while .cg-readme pre keeps the
+   prose wrapping so the card never overflows its column. */
+.cg-readme .shiki { background-color: transparent !important; }
+.cg-readme .shiki span { color: var(--shiki-dark) !important; }
+
+.cg-rail { display: flex; flex-direction: column; gap: var(--space-6); min-width: 0; }
+.cg-rail-label { margin-bottom: var(--space-3); }
+.cg-reflist { display: flex; flex-direction: column; gap: 0.55em; }
+.cg-refrow { display: flex; align-items: center; justify-content: space-between; gap: 0.5em; }
+.cg-refrow .label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  min-width: 0;
+}
+.cg-refrow .label.branch { color: var(--text-body); }
+.cg-refrow .label.tag { color: var(--brand-gold-soft); }
+.cg-refrow .label .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cg-refrow svg { flex: none; }
+
+.cg-infocard { background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--space-4) var(--space-5); }
+.cg-infocard dl { display: flex; flex-direction: column; gap: 0.65em; margin: 0; font-size: var(--text-sm); }
+.cg-inforow { display: flex; justify-content: space-between; gap: 0.5em; }
+.cg-inforow dt { color: var(--text-faint); }
+.cg-inforow dd { margin: 0; color: var(--text-body); }
+.cg-inforow dd.mono { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+
+/* ---- Log -------------------------------------------------------------- */
+.cg-logcard { background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); overflow: hidden; }
+.cg-loghead {
+  display: grid;
+  grid-template-columns: 92px 1fr 150px;
+  gap: var(--space-4);
+  padding: 0.6em var(--space-5);
+  background: var(--surface-inset);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  border-bottom: 1px solid var(--border-default);
+}
+.cg-logrow {
+  display: grid;
+  grid-template-columns: 92px 1fr 150px;
+  gap: var(--space-4);
+  align-items: center;
+  padding: 0.7em var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+  text-decoration: none;
+  cursor: pointer;
+}
+.cg-logrow:hover { background: var(--surface-hover); }
+.cg-logrow .subjcell { min-width: 0; display: flex; align-items: center; gap: 0.6em; }
+.cg-logrow .subject {
+  font-size: var(--text-sm);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cg-logrow:hover .subject { color: var(--accent-hover); }
+.cg-author { display: flex; align-items: center; gap: 0.5em; min-width: 0; }
+.cg-author .who { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.cg-author .nm { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cg-author .ts { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); }
+.cg-pager { margin-top: var(--space-6); display: flex; gap: var(--space-3); }
+
+/* ---- Tree ------------------------------------------------------------- */
+.cg-subcrumb { display: flex; align-items: center; gap: 0.5em; font-family: var(--font-mono); font-size: 13px; margin-bottom: var(--space-4); flex-wrap: wrap; }
+.cg-subcrumb a { color: var(--accent-soft); text-decoration: none; }
+.cg-subcrumb a:hover { color: var(--accent-hover); }
+.cg-subcrumb .slash { color: var(--rp-hl-high); }
+.cg-subcrumb .here { color: var(--text-faint); }
+
+.cg-treecard { background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); overflow: hidden; }
+.cg-treehead {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.6em var(--space-5);
+  background: var(--surface-inset);
+  border-bottom: 1px solid var(--border-default);
+  font-size: var(--text-sm);
+}
+.cg-treehead .who { color: var(--text-muted); }
+.cg-treehead .subject { color: var(--text-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cg-treehead .age { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); }
+.cg-treerow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px 110px;
+  gap: var(--space-4);
+  align-items: center;
+  padding: 0.5em var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+  text-decoration: none;
+}
+.cg-treerow:hover { background: var(--surface-hover); }
+.cg-treerow .nm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  min-width: 0;
+}
+.cg-treerow .nm svg { flex: none; }
+.cg-treerow .nm .txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cg-treerow.dir .nm .txt { color: var(--brand-gold-soft); }
+.cg-treerow:not(.dir) .nm .txt { color: var(--text-body); }
+.cg-treerow:hover .nm .txt { color: var(--accent-hover); }
+.cg-treerow .mode,
+.cg-treerow .size { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); text-align: right; }
+
+/* ---- Commit ----------------------------------------------------------- */
+.cg-commitcard { background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-6); }
+.cg-commitcard h2 { margin: 0 0 var(--space-4); font-size: var(--text-lg); font-weight: 600; color: var(--text-strong); line-height: var(--leading-snug); letter-spacing: -0.01em; }
+.cg-commit-author { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6em; margin-bottom: var(--space-4); }
+.cg-commit-author .nm { font-size: var(--text-sm); color: var(--text-body); }
+.cg-commit-author .email,
+.cg-commit-author .when { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }
+.cg-commit-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.cg-commit-meta a { text-decoration: none; }
+.cg-commit-msg {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: var(--leading-relaxed);
+  color: var(--text-body);
+  background: var(--surface-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
 }
 
-/* Blob (file) view: Shiki-highlighted source with a line-number gutter.
-   Terminal.css styles every <pre> as a bordered, padded, wrapping card; the
-   .blob overrides below strip that and add CSS-counter line numbers over
-   Shiki's per-line spans. The panel uses the site's --block-background-color
-   (so it matches the About box and other panels) rather than Shiki's baked-in
-   theme background; only Shiki's token colors are kept, flipped to --shiki-dark
-   in dark mode via prefers-color-scheme. */
+/* ---- Diff ------------------------------------------------------------- */
+.diff-file { background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: var(--space-6); }
+.cg-diffhead {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  padding: 0.65em var(--space-5);
+  background: var(--surface-inset);
+  border-bottom: 1px solid var(--border-default);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-body);
+}
+.cg-diffhead svg { flex: none; color: var(--text-faint); }
+.cg-diffhead .stat { margin-left: auto; font-size: 11px; color: var(--text-faint); }
+.cg-diffhead .stat .add { color: var(--success); }
+.cg-diffhead .stat .del { color: var(--danger); }
+.diff-file-meta { margin: 0; padding: 0.4em var(--space-5); font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); border-bottom: 1px solid var(--border-subtle); }
+.diff-hunk { margin: 0; padding: 0; overflow-x: auto; white-space: pre; }
+.diff-line {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  padding: 0 var(--space-5);
+  color: var(--text-muted);
+}
+.diff-line.hunk { color: var(--info); background: var(--info-ghost); font-weight: 600; }
+.diff-line.add { color: var(--success); background: var(--accent-ghost); }
+.diff-line.delete { color: var(--danger); background: var(--danger-ghost); }
+.binary { margin: 0; padding: 0.8em var(--space-5); color: var(--text-muted); font-size: var(--text-sm); }
+
+/* ---- Blob ------------------------------------------------------------- */
+.cg-blobmeta { margin: 0 0 var(--space-4); font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }
+.cg-blobmeta a { color: var(--accent); text-decoration: none; }
+.cg-blobmeta a:hover { color: var(--accent-hover); }
 .blob {
-  border: 1px solid var(--secondary-color);
-  border-radius: 3px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   overflow-x: auto;
-  background-color: var(--block-background-color);
+  background: var(--surface-card);
 }
 .blob .shiki {
   margin: 0;
-  padding: 0.5em 1em;
+  padding: var(--space-4) var(--space-5);
   border: 0;
   border-radius: 0;
   white-space: pre;
   line-height: 1.5;
-  /* Suppress Shiki's baked theme background (#fff light / #24292e dark) so the
-     .blob panel colour shows through and matches the rest of the site. */
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  /* Suppress Shiki's baked theme background so the panel colour shows through. */
   background-color: transparent !important;
 }
-.blob .shiki code {
-  counter-reset: line;
-}
-.blob .shiki .line {
-  counter-increment: line;
-}
+.blob .shiki code { counter-reset: line; }
+.blob .shiki .line { counter-increment: line; }
 .blob .shiki .line::before {
   content: counter(line);
   display: inline-block;
@@ -92,51 +689,32 @@ pre.about {
   margin-right: 1.5em;
   padding: 0 0.5em;
   text-align: right;
-  color: var(--secondary-color);
+  color: var(--text-faint);
   user-select: none;
 }
-@media (prefers-color-scheme: dark) {
-  /* Flip token text to each token's dark-theme colour. `span` does not match
-     ::before, so the line-number gutter keeps --secondary-color; the panel
-     background stays --block-background-color (set above) in both themes. */
-  .blob .shiki span {
-    color: var(--shiki-dark) !important;
-  }
+/* Dark-only theme: always render Shiki's dark token colours. */
+.blob .shiki span { color: var(--shiki-dark) !important; }
+.blob-image { max-width: 100%; border-radius: var(--radius-md); }
+
+/* ---- Error ------------------------------------------------------------ */
+.cg-error h2 { font-size: var(--text-xl); margin-bottom: var(--space-4); }
+.cg-alert {
+  background: var(--danger-ghost);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
 }
 
-/* Inline image preview in the blob view. */
-.blob-image {
-  max-width: 100%;
+/* ---- Responsive ------------------------------------------------------- */
+@media (max-width: 980px) {
+  .cg-repogrid { grid-template-columns: 1fr; }
+  .cg-summary { grid-template-columns: 1fr; }
 }
-
-.diff-file {
-  margin: 1.5em 0;
-}
-
-.diff-file-meta {
-  color: var(--secondary-color);
-}
-
-.diff-hunk {
-  padding: 0;
-  overflow-x: auto;
-  white-space: pre;
-}
-
-.diff-line {
-  display: block;
-  padding: 0 1em;
-}
-
-.diff-line.hunk {
-  color: var(--secondary-color);
-  background: var(--code-bg-color);
-}
-
-.diff-line.add {
-  background: rgba(46, 160, 67, 0.15);
-}
-
-.diff-line.delete {
-  background: rgba(248, 81, 73, 0.15);
+@media (max-width: 640px) {
+  .cg-search { display: none; }
+  .cg-loghead { grid-template-columns: 80px 1fr; }
+  .cg-loghead span:last-child { display: none; }
+  .cg-logrow { grid-template-columns: 80px 1fr; }
+  .cg-logrow .cg-author { display: none; }
 }

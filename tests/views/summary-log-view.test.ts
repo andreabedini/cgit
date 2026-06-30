@@ -20,23 +20,22 @@ function commit(oid: string, summary: string): Commit {
   };
 }
 
-test("SummaryPage renders branches, tags, recent log and escaped about", () => {
+test("SummaryPage renders branches, tags, recent log and highlighted about", () => {
   const html = SummaryPage({
     name: "alpha",
     description: "the alpha repo",
     branches: [ref("main", "branch", OID)],
     tags: [ref("v1.0", "tag", OID)],
     recentCommits: [commit(OID, "Add <x>")],
-    cloneUrls: ["https://example.com/alpha.git"],
-    about: "# Title & stuff",
+    aboutHtml: '<pre class="shiki"><code>README</code></pre>',
     now,
   }).toString();
   expect(html).toContain("main");
   expect(html).toContain("v1.0");
   expect(html).toContain("Add &lt;x&gt;");
   expect(html).toContain(`/alpha/commit/${OID}/`);
-  expect(html).toContain("# Title &amp; stuff"); // about escaped as plain text
-  expect(html).toContain("https://example.com/alpha.git");
+  expect(html).toContain('class="cg-readme"'); // README rendered inside its card container
+  expect(html).toContain('<pre class="shiki"><code>README</code></pre>'); // highlighted HTML injected verbatim
   expect(html).toContain("1 day ago");
 });
 

@@ -6,32 +6,43 @@ export interface RepoListEntry {
   lastCommit?: Date;
 }
 
-export function RepolistPage(props: { entries: RepoListEntry[]; now: Date }) {
+export function RepolistPage(props: { entries: RepoListEntry[]; now: Date; host?: string; query?: string }) {
+  const n = props.entries.length;
   return (
     <>
       <title>Repositories</title>
-      <table class="repolist">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Owner</th>
-            <th>Idle</th>
-          </tr>
-        </thead>
-        <tbody>
+      <div class="cg-index-head">
+        <div>
+          <h1>Repositories</h1>
+        </div>
+        <span class="cg-index-meta">
+          {n} {n === 1 ? "repo" : "repos"}
+          {props.host ? ` · ${props.host}` : ""}
+        </span>
+      </div>
+      {n === 0 ? (
+        <p class="cg-empty">
+          {props.query ? `No repositories match “${props.query}”.` : "No repositories found."}
+        </p>
+      ) : (
+        <div class="cg-repogrid">
           {props.entries.map(({ repo, lastCommit }) => (
-            <tr>
-              <td>
-                <a href={`/${repo.name}/`}>{repo.name}</a>
-              </td>
-              <td>{repo.description ?? ""}</td>
-              <td>{repo.owner ?? ""}</td>
-              <td>{lastCommit ? formatAge(lastCommit, props.now) : ""}</td>
-            </tr>
+            <a class="cg-repocard" href={`/${repo.name}/`}>
+              <span class="name">{repo.name}</span>
+              {repo.description ? <p class="desc">{repo.description}</p> : <p class="desc">&nbsp;</p>}
+              <div class="meta">
+                {lastCommit ? <span>updated {formatAge(lastCommit, props.now)}</span> : <span>no commits yet</span>}
+                {repo.owner ? (
+                  <>
+                    <span>&#8226;</span>
+                    <span>{repo.owner}</span>
+                  </>
+                ) : null}
+              </div>
+            </a>
           ))}
-        </tbody>
-      </table>
+        </div>
+      )}
     </>
   );
 }

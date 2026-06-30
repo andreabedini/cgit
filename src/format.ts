@@ -2,6 +2,13 @@ export function abbrevOid(oid: string): string {
   return oid.slice(0, 10);
 }
 
+/** Up to two uppercase initials from a display name, for avatar chips. */
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
+  if (!parts.length) return "?";
+  return parts.map((p) => p[0]!.toUpperCase()).join("");
+}
+
 const UNITS: [label: string, seconds: number][] = [
   ["year", 365 * 24 * 3600],
   ["month", 30 * 24 * 3600],

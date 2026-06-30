@@ -43,7 +43,9 @@ is a Bun server object (`{ port, fetch }`) that calls `app.fetch(req, loadConfig
   `useRequestContext`.
 - **`src/errors.ts`** — `HttpError` + `statusForError`/`notFound`/`badRequest`.
 - **`src/format.ts`** — `abbrevOid`, `formatAge`.
-- **`src/public/`** — `cgit.css` and vendored `terminal.min.css` (Terminal.css).
+- **`src/public/`** — `cgit.css`, the sole stylesheet. A dark-only, Rose Pine–derived
+  skin (the "Bedini Homelab" design): vendored design tokens followed by `.cg-*`
+  component classes. No CSS framework.
 
 ## Conventions
 

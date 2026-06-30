@@ -1,21 +1,28 @@
 import type { Commit, Reference } from "../../git/facade";
 import { abbrevOid, formatAge } from "../../format";
 
-function RefList(props: { name: string; title: string; refs: Reference[] }) {
+function commitHref(name: string, oid: string): string {
+  return `/${encodeURIComponent(name)}/commit/${encodeURIComponent(oid)}/`;
+}
+
+function BranchIcon() {
   return (
-    <section>
-      <h3>{props.title}</h3>
-      <ul>
-        {props.refs.map((r) => (
-          <li>
-            {r.name}{" "}
-            <a href={`/${encodeURIComponent(props.name)}/commit/${encodeURIComponent(r.commitOid)}/`}>
-              <code>{abbrevOid(r.commitOid)}</code>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="6" cy="6" r="3"></circle>
+      <circle cx="6" cy="18" r="3"></circle>
+      <path d="M6 9v6"></path>
+      <path d="M21 6a9 9 0 0 1-9 9"></path>
+      <circle cx="18" cy="6" r="3"></circle>
+    </svg>
+  );
+}
+
+function TagIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--brand-gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"></path>
+      <circle cx="7.5" cy="7.5" r="1.2" fill="var(--brand-gold)"></circle>
+    </svg>
   );
 }
 
@@ -25,55 +32,117 @@ export interface SummaryProps {
   branches: Reference[];
   tags: Reference[];
   recentCommits: Commit[];
-  cloneUrls: string[];
-  about?: string;
+  decorations?: Map<string, Reference[]>;
+  aboutHtml?: string; // Shiki HTML for README.md, present when the repo has one
+  headRef?: string;
+  owner?: string;
   now: Date;
 }
 
 export function SummaryPage(props: SummaryProps) {
+  const decorations = props.decorations ?? new Map<string, Reference[]>();
+  const lastCommit = props.recentCommits[0]?.author.when;
   return (
     <>
       <title>{props.name}</title>
-      <h2>{props.name}</h2>
-      {props.description ? <p>{props.description}</p> : null}
-      <RefList name={props.name} title="Branches" refs={props.branches} />
-      <RefList name={props.name} title="Tags" refs={props.tags} />
-      <section>
-        <h3>Recent commits</h3>
-        <table class="log">
-          <tbody>
-            {props.recentCommits.map((commit) => (
-              <tr>
-                <td>{formatAge(commit.author.when, props.now)}</td>
-                <td>
-                  <a href={`/${encodeURIComponent(props.name)}/commit/${encodeURIComponent(commit.oid)}/`}>
-                    {commit.summary}
-                  </a>
-                </td>
-                <td>{commit.author.name}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-      {props.cloneUrls.length ? (
-        <section>
-          <h3>Clone</h3>
-          <ul>
-            {props.cloneUrls.map((u) => (
-              <li>
-                <code>{u}</code>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-      {props.about ? (
-        <section id="summary">
-          <h3>About</h3>
-          <pre class="about">{props.about}</pre>
-        </section>
-      ) : null}
+      <div class="cg-summary">
+        <div class="main">
+          <div class="cg-section-head">
+            <h2>Recent activity</h2>
+            <a class="more" href={`/${encodeURIComponent(props.name)}/log/`}>
+              view log &rarr;
+            </a>
+          </div>
+          <div class="cg-card cg-rowlist">
+            {props.recentCommits.map((commit) => {
+              const refs = decorations.get(commit.oid) ?? [];
+              return (
+                <a class="cg-row" href={commitHref(props.name, commit.oid)}>
+                  <span class="cg-hash">{commit.abbrevOid}</span>
+                  <span class="subject">{commit.summary}</span>
+                  {refs.map((r) => (
+                    <span class={`ref ${r.kind}`}>{r.name}</span>
+                  ))}
+                  <span class="age">{formatAge(commit.author.when, props.now)}</span>
+                </a>
+              );
+            })}
+          </div>
+
+          {props.aboutHtml ? (
+            <>
+              <h2 class="cg-readme-head">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--text-faint)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                README.md
+              </h2>
+              <div class="cg-readme" dangerouslySetInnerHTML={{ __html: props.aboutHtml }} />
+            </>
+          ) : null}
+        </div>
+
+        <aside class="cg-rail">
+          {props.branches.length ? (
+            <div>
+              <div class="cg-eyebrow cg-rail-label">Branches</div>
+              <div class="cg-reflist">
+                {props.branches.map((b) => (
+                  <div class="cg-refrow">
+                    <span class="label branch">
+                      <BranchIcon />
+                      <span class="nm">{b.name}</span>
+                      {b.name === props.headRef ? <span class="cg-head-pill">HEAD</span> : null}
+                    </span>
+                    <a class="cg-hash" href={commitHref(props.name, b.commitOid)}>
+                      {abbrevOid(b.commitOid)}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {props.tags.length ? (
+            <div>
+              <div class="cg-eyebrow cg-rail-label">Tags</div>
+              <div class="cg-reflist">
+                {props.tags.map((t) => (
+                  <div class="cg-refrow">
+                    <span class="label tag">
+                      <TagIcon />
+                      <span class="nm">{t.name}</span>
+                    </span>
+                    <a class="cg-hash" href={commitHref(props.name, t.commitOid)}>
+                      {abbrevOid(t.commitOid)}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {props.owner || lastCommit ? (
+            <div class="cg-infocard">
+              <dl>
+                {props.owner ? (
+                  <div class="cg-inforow">
+                    <dt>owner</dt>
+                    <dd>{props.owner}</dd>
+                  </div>
+                ) : null}
+                {lastCommit ? (
+                  <div class="cg-inforow">
+                    <dt>updated</dt>
+                    <dd class="mono">{formatAge(lastCommit, props.now)}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            </div>
+          ) : null}
+        </aside>
+      </div>
     </>
   );
 }

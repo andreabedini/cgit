@@ -28,12 +28,20 @@ export function createApp() {
   // Infra routes are registered before the repo sub-app so requests like
   // `/healthz` or `/cgit.css` never match the `/:repo` redirect.
   app.get("/healthz", (c) => c.text("ok"));
-  app.get("/terminal.min.css", serveStatic({ path: "./src/public/terminal.min.css" }));
   app.get("/cgit.css", serveStatic({ path: "./src/public/cgit.css" }));
 
   app.get("/", (c) => {
+    // Optional `?q=` filters the index by repo name or description.
+    const q = (c.req.query("q") ?? "").trim();
+    const needle = q.toLowerCase();
+    const matched = scanRepos(c.env.CGIT_SCAN_PATH).filter(
+      (r) =>
+        !needle ||
+        r.name.toLowerCase().includes(needle) ||
+        (r.description ?? "").toLowerCase().includes(needle),
+    );
     // Numbered pagination UI is a later milestone; cap to the first page for now.
-    const repos = scanRepos(c.env.CGIT_SCAN_PATH).slice(0, c.env.CGIT_REPOLIST_PAGE_SIZE);
+    const repos = matched.slice(0, c.env.CGIT_REPOLIST_PAGE_SIZE);
     const entries: RepoListEntry[] = repos.map((repo) => {
       const handle = openRepository(repo.path);
       try {
@@ -43,7 +51,15 @@ export function createApp() {
         handle.free();
       }
     });
-    return c.render(<RepolistPage entries={entries} now={new Date()} />);
+    let host: string | undefined;
+    if (c.env.CGIT_CLONE_URL_BASE) {
+      try {
+        host = new URL(c.env.CGIT_CLONE_URL_BASE).host;
+      } catch {
+        host = undefined;
+      }
+    }
+    return c.render(<RepolistPage entries={entries} now={new Date()} host={host} query={q || undefined} />);
   });
 
   // appendTrailingSlash is a 404 fallback: it sends slash-less paths to their
@@ -60,7 +76,7 @@ export function createApp() {
   app.use("/:repo/*", repoLayout);
   app.use("/:repo/*", useRepository);
 
-  app.get("/:repo/", (c) => {
+  app.get("/:repo/", async (c) => {
     const repo = c.get("repo");
     const refs = repo.references();
     const branches = refs.filter((r) => r.kind === "branch");
@@ -68,11 +84,11 @@ export function createApp() {
     const recentCommits = repo.log({ limit: c.env.CGIT_SUMMARY_LOG }).commits;
 
     const disc = c.get("disc");
-    const cloneUrls = c.env.CGIT_CLONE_URL_BASE
-      ? [`${c.env.CGIT_CLONE_URL_BASE.replace(/\/$/, "")}/${disc.name}.git`]
-      : [];
     const readme = repo.readFileAtRef(repo.headRef(), "README.md");
-    const about = readme ? new TextDecoder().decode(readme) : undefined;
+    const aboutHtml = readme
+      ? await highlightBlob(new TextDecoder().decode(readme), "README.md", readme.length)
+      : undefined;
+    const decorations = buildDecorationMap(repo.references());
 
     return c.render(
       <SummaryPage
@@ -81,8 +97,10 @@ export function createApp() {
         branches={branches.slice(0, c.env.CGIT_SUMMARY_BRANCHES)}
         tags={tags.slice(0, c.env.CGIT_SUMMARY_TAGS)}
         recentCommits={recentCommits}
-        cloneUrls={cloneUrls}
-        about={about}
+        decorations={decorations}
+        aboutHtml={aboutHtml}
+        headRef={repo.headRef()}
+        owner={disc.owner}
         now={new Date()}
       />,
     );
@@ -144,7 +162,10 @@ export function createApp() {
 
     const entries = repo.tree(ref, path);
     if (entries) {
-      return c.render(<TreePage name={disc.name} ref={ref} path={path} entries={entries} />);
+      const head = repo.commit(ref);
+      return c.render(
+        <TreePage name={disc.name} ref={ref} path={path} entries={entries} headCommit={head ?? undefined} now={new Date()} />,
+      );
     }
     const bytes = repo.readFileAtRef(ref, path);
     if (bytes !== null) {

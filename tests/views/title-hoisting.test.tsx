@@ -26,7 +26,7 @@ async function render(node: any): Promise<string> {
 
 test("SummaryPage title is hoisted into <head> through the renderer", async () => {
   const html = await render(
-    <SummaryPage name="alpha" branches={[]} tags={[]} recentCommits={[]} cloneUrls={[]} now={now} />,
+    <SummaryPage name="alpha" branches={[]} tags={[]} recentCommits={[]} now={now} />,
   );
   expect(headOf(html)).toContain("<title>alpha</title>");
 });

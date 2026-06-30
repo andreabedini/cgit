@@ -26,11 +26,10 @@ function repoApp() {
   return app;
 }
 
-test("renderer wraps content in a full HTML document with CSS links", async () => {
+test("renderer wraps content in a full HTML document with the stylesheet", async () => {
   const app = appWith((c) => c.render(<p>hello</p>));
   const html = await (await app.request("/")).text();
   expect(html).toContain("<!DOCTYPE html>");
-  expect(html).toContain('href="/terminal.min.css"');
   expect(html).toContain('href="/cgit.css"');
   expect(html).toContain("<p>hello</p>");
 });
@@ -49,27 +48,27 @@ test("renderer hoists a page <title> into <head>", async () => {
   expect(head).toContain("<title>My Title</title>");
 });
 
-test("repo layout nests the menu inside the root chrome, marking the active tab", async () => {
+test("repo layout nests the tabs inside the root chrome, marking the active tab", async () => {
   const html = await (await repoApp().request("/alpha/log/")).text();
   expect(html).toContain("<!DOCTYPE html>"); // wrapped by the parent layout
   expect(html).toContain('href="/alpha/"');
   expect(html).toContain('href="/alpha/log/"');
   // The log link is the active one on /alpha/log/.
-  expect(html).toContain('class="menu-item active" href="/alpha/log/"');
+  expect(html).toContain('class="cg-tab active" href="/alpha/log/"');
 });
 
 test("repo layout marks summary active on the repo index", async () => {
   const html = await (await repoApp().request("/alpha/")).text();
-  expect(html).toContain('class="menu-item active" href="/alpha/"');
+  expect(html).toContain('class="cg-tab active" href="/alpha/"');
 });
 
-test("repo layout marks log active on the diff view", async () => {
+test("repo layout keeps summary active on the diff view", async () => {
   const html = await (await repoApp().request("/alpha/diff/main/")).text();
-  expect(html).toContain('class="menu-item active" href="/alpha/log/"');
+  expect(html).toContain('class="cg-tab active" href="/alpha/"');
 });
 
-test("root renderer omits the repo nav", async () => {
+test("root renderer omits the repo tabs", async () => {
   const app = appWith((c) => c.render(<p>x</p>));
   const html = await (await app.request("/")).text();
-  expect(html).not.toContain("terminal-menu");
+  expect(html).not.toContain("cg-tabs");
 });

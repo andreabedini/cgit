@@ -1,5 +1,5 @@
 import type { Commit, Reference } from "../../git/facade";
-import { formatAge } from "../../format";
+import { formatAge, initials } from "../../format";
 import { encodeSegments } from "./paths";
 
 export interface CommitProps {
@@ -16,70 +16,47 @@ function commitHref(name: string, oid: string): string {
 export function CommitPage(props: CommitProps) {
   const treeHref = `/${encodeURIComponent(props.name)}/tree/${encodeSegments(props.commit.oid)}/`;
   const diffHref = `/${encodeURIComponent(props.name)}/diff/${encodeURIComponent(props.commit.oid)}/`;
+  const { commit } = props;
   return (
     <>
-      <title>{`${props.name}: commit ${props.commit.abbrevOid}`}</title>
-      <h2>{props.commit.summary}</h2>
-      <table class="commit-meta">
-        <tbody>
-          <tr>
-            <th>commit</th>
-            <td>
-              <code>{props.commit.oid}</code>
-            </td>
-          </tr>
-          {props.refs.length ? (
-            <tr>
-              <th>refs</th>
-              <td>
-                {props.refs.map((ref) => (
-                  <span class={`ref ${ref.kind}`}>{ref.name}</span>
-                ))}
-              </td>
-            </tr>
+      <title>{`${props.name}: commit ${commit.abbrevOid}`}</title>
+      <div class="cg-commitcard">
+        <h2>{commit.summary}</h2>
+        <div class="cg-commit-author">
+          <span class="cg-avatar">{initials(commit.author.name)}</span>
+          <span class="nm">{commit.author.name}</span>
+          <span class="email">&lt;{commit.author.email}&gt;</span>
+          <span class="when">authored {formatAge(commit.author.when, props.now)}</span>
+          {props.refs.map((ref) => (
+            <span class={`ref ${ref.kind}`}>{ref.name}</span>
+          ))}
+        </div>
+        <div class="cg-commit-meta">
+          <span>
+            commit <span class="cg-hash">{commit.abbrevOid}</span>
+          </span>
+          {commit.parents.length ? (
+            <span>
+              parent{" "}
+              {commit.parents.map((parent, i) => (
+                <>
+                  {i ? " " : null}
+                  <a class="cg-hash" href={commitHref(props.name, parent)}>
+                    {parent.slice(0, 10)}
+                  </a>
+                </>
+              ))}
+            </span>
           ) : null}
-          <tr>
-            <th>author</th>
-            <td>
-              {props.commit.author.name} &lt;{props.commit.author.email}&gt; ({formatAge(props.commit.author.when, props.now)})
-            </td>
-          </tr>
-          <tr>
-            <th>committer</th>
-            <td>
-              {props.commit.committer.name} &lt;{props.commit.committer.email}&gt; ({formatAge(props.commit.committer.when, props.now)})
-            </td>
-          </tr>
-          {props.commit.parents.length ? (
-            <tr>
-              <th>parents</th>
-              <td>
-                {props.commit.parents.map((parent, i) => (
-                  <>
-                    {i ? " " : null}
-                    <a href={commitHref(props.name, parent)}>
-                      <code>{parent.slice(0, 10)}</code>
-                    </a>
-                  </>
-                ))}
-              </td>
-            </tr>
-          ) : null}
-          <tr>
-            <th>tree</th>
-            <td>
-              <a href={treeHref}>browse files</a>
-            </td>
-          </tr>
-          <tr>
-            <th>diff</th>
-            <td>
-              <a href={diffHref}>view diff</a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <pre class="about">{props.commit.message}</pre>
+          <span>
+            tree <a class="cg-hash" href={treeHref}>browse files</a>
+          </span>
+          <span style="margin-left:auto">
+            <a class="cg-hash" href={diffHref}>view diff &rarr;</a>
+          </span>
+        </div>
+      </div>
+      <pre class="cg-commit-msg">{commit.message}</pre>
     </>
   );
 }

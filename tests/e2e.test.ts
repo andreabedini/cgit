@@ -49,7 +49,8 @@ test("GET /project/ shows refs and about", async () => {
   const html = await res.text();
   expect(html).toContain("main");
   expect(html).toContain("v1.0");
-  expect(html).toContain("# Fixture"); // README rendered as plain text
+  expect(html).toContain("Fixture"); // README text present
+  expect(html).toContain("shiki"); // README highlighted like the blob view
 });
 
 test("GET /project/log/ paginates", async () => {
@@ -178,11 +179,4 @@ test("GET /cgit.css serves the stylesheet", async () => {
   const res = await req("/cgit.css");
   expect(res.status).toBe(200);
   expect(res.headers.get("content-type")).toContain("text/css");
-});
-
-test("GET /terminal.min.css serves the vendored Terminal.css", async () => {
-  const res = await req("/terminal.min.css");
-  expect(res.status).toBe(200);
-  expect(res.headers.get("content-type")).toContain("text/css");
-  expect(await res.text()).toContain("terminal-nav");
 });

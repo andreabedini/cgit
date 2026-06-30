@@ -16,7 +16,7 @@ export function BlobPage(props: BlobProps) {
     <>
       <title>{`${props.name}: ${props.path}`}</title>
       <Breadcrumb name={props.name} ref={props.ref} path={props.path} />
-      <p>
+      <p class="cg-blobmeta">
         <a href={rawHref}>raw</a> &middot; {props.size} bytes
       </p>
       {props.kind === "image" ? (
