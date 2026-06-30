@@ -41,4 +41,5 @@ test("CommitCard renders metadata, refs and parent/tree links", async () => {
   expect(html).toContain('href="/proj/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/"');
   expect(html).toContain('href="/proj/tree/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/"');
   expect(html).toContain('class="ref branch"');
+  expect(html).toContain("Body line"); // full message body, not just the summary
 });

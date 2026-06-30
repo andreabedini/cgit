@@ -624,6 +624,7 @@ a.cg-hash:hover { color: #c4ecf2; background: rgba(156, 207, 216, 0.2); }
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-6);
 }
 
 /* ---- Diff ------------------------------------------------------------- */

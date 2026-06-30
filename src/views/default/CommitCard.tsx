@@ -13,6 +13,7 @@ export function CommitCard() {
   const tree = treeHref(name, commit.oid);
 
   return (
+    <>
     <div class="cg-commitcard">
       <h2>{commit.summary}</h2>
       <div class="cg-commit-author">
@@ -46,5 +47,7 @@ export function CommitCard() {
         </span>
       </div>
     </div>
+    <pre class="cg-commit-msg">{commit.message}</pre>
+    </>
   );
 }
