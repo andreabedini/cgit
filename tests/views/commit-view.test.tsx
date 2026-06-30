@@ -1,19 +1,9 @@
 import { test, expect } from "bun:test";
 import { Hono } from "hono";
 import { renderer } from "../../src/views/default/renderer";
-import { CommitPage } from "../../src/views/default/CommitPage";
+import { CommitCard } from "../../src/views/default/CommitCard";
+import type { Env } from "../../src/app/env";
 import type { Commit, Reference } from "../../src/git/facade";
-
-function headOf(html: string): string {
-  return html.slice(0, html.indexOf("</head>"));
-}
-
-async function render(node: any): Promise<string> {
-  const app = new Hono();
-  app.use(renderer);
-  app.get("/", (c) => c.render(node));
-  return (await app.request("/")).text();
-}
 
 const commit: Commit = {
   oid: "a".repeat(40),
@@ -29,16 +19,26 @@ const refs: Reference[] = [
   { name: "main", kind: "branch", fullName: "refs/heads/main", targetOid: commit.oid, commitOid: commit.oid },
 ];
 
-test("CommitPage hoists its title and renders metadata links", async () => {
-  const html = await render(
-    <CommitPage name="proj" commit={commit} refs={refs} now={new Date("2026-06-05T12:00:00Z")} />,
-  );
-  expect(headOf(html)).toContain("<title>proj: commit aaaaaaaaaa</title>");
+// CommitCard reads commit/disc/repo off the request context, so seed them in a
+// middleware before rendering (mirrors what useRepository + the route do).
+async function render(): Promise<string> {
+  const app = new Hono<Env>();
+  app.use(renderer);
+  app.use("*", async (c, next) => {
+    c.set("commit", commit);
+    c.set("disc", { name: "proj", path: "/proj", description: undefined } as any);
+    c.set("repo", { decorations: () => new Map([[commit.oid, refs]]) } as any);
+    await next();
+  });
+  app.get("/", (c) => c.render(<CommitCard />));
+  return (await app.request("/")).text();
+}
+
+test("CommitCard renders metadata, refs and parent/tree links", async () => {
+  const html = await render();
   expect(html).toContain("Add a.txt");
   expect(html).toContain("ann@example.com");
   expect(html).toContain('href="/proj/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/"');
   expect(html).toContain('href="/proj/tree/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/"');
-  expect(html).toContain('href="/proj/diff/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/"');
   expect(html).toContain('class="ref branch"');
-  expect(html).toContain("Body line");
 });

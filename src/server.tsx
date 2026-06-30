@@ -10,8 +10,7 @@ import { highlightBlob } from "./highlight";
 import { mimeForPath } from "./mime";
 import { splitRefPath } from "./git/refpath";
 import { BlobPage } from "./views/default/BlobPage";
-import { CommitPage } from "./views/default/CommitPage";
-import { DiffPage } from "./views/default/DiffPage";
+import { DiffFileCard } from "./views/default/DiffPage";
 import { TreePage } from "./views/default/TreePage";
 import { useRepository } from "./middlewares";
 import { ErrorPage } from "./views/default/ErrorPage";
@@ -19,6 +18,7 @@ import { LogPage } from "./views/default/LogPage";
 import { renderer, repoLayout } from "./views/default/renderer";
 import { RepolistPage, type RepoListEntry } from "./views/default/RepolistPage";
 import { SummaryPage } from "./views/default/SummaryPage";
+import { CommitCard } from "./views/default/CommitCard";
 
 export function createApp() {
   const app = factory.createApp();
@@ -108,7 +108,7 @@ export function createApp() {
 
   app.get("/:repo/log/", (c) => {
     const disc = c.get("disc");
-    
+
     const repo = c.get("repo");
     const ref = c.req.query("h") || repo.headRef();
     const offset = Math.max(0, Number(c.req.query("ofs") ?? 0) | 0);
@@ -130,23 +130,35 @@ export function createApp() {
     );
   });
 
-  app.get("/:repo/commit/:rev/", (c) => {
+  app.use("/:repo/commit/:rev/", async (c, next) => {
     const repo = c.get("repo");
-    const disc = c.get("disc");
-    const commit = repo.commit(c.req.param("rev"));
-    if (!commit) throw notFound(`Commit not found: ${c.req.param("rev")}`);
-    const refs = repo.decorations().get(commit.oid) ?? [];
-    return c.render(<CommitPage name={disc.name} commit={commit} refs={refs} now={new Date()} />);
-  });
 
-  app.get("/:repo/diff/:rev/", (c) => {
-    const repo = c.get("repo");
-    const disc = c.get("disc");
     const commit = repo.commit(c.req.param("rev"));
     if (!commit) throw notFound(`Commit not found: ${c.req.param("rev")}`);
+    c.set("commit", commit);
+
     const diff = repo.diff(commit.oid);
     if (!diff) throw notFound(`Commit not found: ${c.req.param("rev")}`);
-    return c.render(<DiffPage name={disc.name} commit={commit} diff={diff} />);
+    c.set("diff", diff);
+
+    return next();
+  });
+
+  app.get("/:repo/commit/:rev/", (c) => {
+    const name = c.get("disc")?.name;
+    const commit = c.get("commit");
+    const diff = c.get("diff");
+    return c.render(
+      <>
+        <title>{`${name}: commit ${commit.abbrevOid}`}</title>
+        <CommitCard />
+        {diff.files.length ? (
+          diff.files.map((file) => <DiffFileCard file={file} />)
+        ) : (
+          <p class="cg-empty">No changes.</p>
+        )}
+      </>
+    );
   });
 
   app.get("/:repo/tree/*", async (c) => {

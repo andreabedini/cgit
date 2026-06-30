@@ -1,19 +1,4 @@
-import type { Commit, CommitDiff, DiffFile, DiffLine } from "../../git/facade";
-import { encodeSegments } from "./paths";
-
-export interface DiffProps {
-  name: string;
-  commit: Commit;
-  diff: CommitDiff;
-}
-
-function commitHref(name: string, oid: string): string {
-  return `/${encodeURIComponent(name)}/commit/${encodeURIComponent(oid)}/`;
-}
-
-function treeHref(name: string, oid: string): string {
-  return `/${encodeURIComponent(name)}/tree/${encodeSegments(oid)}/`;
-}
+import type { DiffFile, DiffLine } from "../../git/facade";
 
 function statusLabel(file: DiffFile): string {
   switch (file.status) {
@@ -66,56 +51,33 @@ function FileIcon() {
   );
 }
 
-export function DiffPage(props: DiffProps) {
+export function DiffFileCard({ file }: { file: DiffFile }) {
+  const { add, del } = countLines(file);
   return (
-    <>
-      <title>{`${props.name}: diff ${props.commit.abbrevOid}`}</title>
-      <div class="cg-commitcard">
-        <h2>{props.commit.summary}</h2>
-        <div class="cg-commit-meta">
-          <span>
-            <a class="cg-hash" href={commitHref(props.name, props.commit.oid)}>commit</a>
-          </span>
-          <span>
-            <a class="cg-hash" href={treeHref(props.name, props.commit.oid)}>tree</a>
-          </span>
-          {props.commit.parents.length > 1 ? <span>diff against first parent</span> : null}
-        </div>
+    <section class="diff-file">
+      <div class="cg-diffhead">
+        <FileIcon />
+        {displayPath(file)}
+        <span class="stat">
+          <span class="add">+{add}</span> <span class="del">-{del}</span>
+        </span>
       </div>
-      {props.diff.files.length ? (
-        props.diff.files.map((file) => {
-          const { add, del } = countLines(file);
-          return (
-            <section class="diff-file">
-              <div class="cg-diffhead">
-                <FileIcon />
-                {displayPath(file)}
-                <span class="stat">
-                  <span class="add">+{add}</span> <span class="del">-{del}</span>
-                </span>
-              </div>
-              <p class="diff-file-meta">{statusLabel(file)}</p>
-              {file.binary ? (
-                <p class="binary">Binary file changed.</p>
-              ) : (
-                file.hunks.map((hunk) => (
-                  <pre class="diff-hunk">
-                    <span class="diff-line hunk">{hunk.header}</span>
-                    {hunk.lines.map((line) => (
-                      <span class={`diff-line ${line.type}`}>
-                        {linePrefix(line)}
-                        {line.content}
-                      </span>
-                    ))}
-                  </pre>
-                ))
-              )}
-            </section>
-          );
-        })
+      <p class="diff-file-meta">{statusLabel(file)}</p>
+      {file.binary ? (
+        <p class="binary">Binary file changed.</p>
       ) : (
-        <p class="cg-empty">No changes.</p>
+        file.hunks.map((hunk) => (
+          <pre class="diff-hunk">
+            <span class="diff-line hunk">{hunk.header}</span>
+            {hunk.lines.map((line) => (
+              <span class={`diff-line ${line.type}`}>
+                {linePrefix(line)}
+                {line.content}
+              </span>
+            ))}
+          </pre>
+        ))
       )}
-    </>
-  );
+    </section>);
 }
+

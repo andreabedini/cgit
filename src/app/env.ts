@@ -1,6 +1,6 @@
 import { createFactory } from 'hono/factory'
 
-import { Repository } from "../git";
+import { Commit, CommitDiff, Repository } from "../git";
 import { DiscoveredRepo } from "../git/scan";
 
 export type Env = {
@@ -17,6 +17,8 @@ export type Env = {
   Variables: {
     disc: DiscoveredRepo;
     repo: Repository;
+    commit: Commit;
+    diff: CommitDiff;
   }
 };
 

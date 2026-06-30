@@ -60,7 +60,7 @@ test("GET /project/log/ paginates", async () => {
   expect(html).toContain("older"); // hasNext pager (page size 2, 3 commits)
 });
 
-test("GET /project/commit/:oid/ renders commit metadata and message", async () => {
+test("GET /project/commit/:oid/ renders commit metadata", async () => {
   const logHtml = await (await req("/project/log/")).text();
   const href = logHtml.match(/href="(\/project\/commit\/[0-9a-f]{40}\/)"/)?.[1];
   expect(href).toBeTruthy();
@@ -69,24 +69,23 @@ test("GET /project/commit/:oid/ renders commit metadata and message", async () =
   expect(html).toContain("Add b.txt");
   expect(html).toContain("author@example.com");
   expect(html).toContain("/project/tree/");
-  expect(html).toContain("/project/diff/");
 });
 
-test("GET /project/diff/:oid/ renders the commit diff", async () => {
-  const html = await (await req(`/project/diff/${commitOids[0]}/`)).text();
+test("GET /project/commit/:oid/ renders the commit diff inline", async () => {
+  const html = await (await req(`/project/commit/${commitOids[0]}/`)).text();
   expect(html).toContain("b.txt");
   expect(html).toContain("second");
   expect(html).toContain("Binary file changed.");
 });
 
-test("GET /project/diff/:oid/ renders root-commit additions", async () => {
-  const html = await (await req(`/project/diff/${commitOids.at(-1)!}/`)).text();
+test("GET /project/commit/:oid/ renders root-commit additions", async () => {
+  const html = await (await req(`/project/commit/${commitOids.at(-1)!}/`)).text();
   expect(html).toContain("README.md");
   expect(html).toContain("Fixture");
 });
 
-test("GET /project/diff/v1.0/ resolves a tag revision", async () => {
-  const html = await (await req("/project/diff/v1.0/")).text();
+test("GET /project/commit/v1.0/ resolves a tag revision", async () => {
+  const html = await (await req("/project/commit/v1.0/")).text();
   expect(html).toContain("a.txt");
 });
 
