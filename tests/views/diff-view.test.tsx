@@ -1,7 +1,7 @@
 import { test, expect } from "bun:test";
 import { Hono } from "hono";
 import { renderer } from "../../src/views/default/renderer";
-import { DiffFileCard } from "../../src/views/default/DiffPage";
+import { DiffFileCard } from "../../src/views/default/DiffFileCard";
 import type { DiffFile } from "../../src/git/facade";
 
 async function render(node: any): Promise<string> {

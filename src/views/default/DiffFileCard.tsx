@@ -80,4 +80,3 @@ export function DiffFileCard({ file }: { file: DiffFile }) {
       )}
     </section>);
 }
-

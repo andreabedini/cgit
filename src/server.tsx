@@ -10,7 +10,7 @@ import { highlightBlob } from "./highlight";
 import { mimeForPath } from "./mime";
 import { splitRefPath } from "./git/refpath";
 import { BlobPage } from "./views/default/BlobPage";
-import { DiffFileCard } from "./views/default/DiffPage";
+import { DiffFileCard } from "./views/default/DiffFileCard";
 import { TreePage } from "./views/default/TreePage";
 import { useRepository } from "./middlewares";
 import { ErrorPage } from "./views/default/ErrorPage";
