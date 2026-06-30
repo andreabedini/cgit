@@ -99,6 +99,17 @@ class Repo implements Repository {
     return refs;
   }
 
+  // Group refs by the commit they point at, for decorating log rows.
+  decorations(): Map<string, Reference[]> {
+    const map = new Map<string, Reference[]>();
+    for (const ref of this.references()) {
+      const list = map.get(ref.commitOid) ?? [];
+      list.push(ref);
+      map.set(ref.commitOid, list);
+    }
+    return map;
+  }
+
   private peelToCommitOid(refPtr: number): string {
     const objSlot = ptrSlot();
     check(lib.git_reference_peel(toPtr(ptr(objSlot)), toPtr(refPtr), GIT_OBJECT_COMMIT));

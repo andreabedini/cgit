@@ -77,6 +77,8 @@ export interface Repository {
   readonly path: string;
   headRef(): string;
   references(): Reference[];
+  /** Groups references by the commit they point at, for decorating log rows. */
+  decorations(): Map<string, Reference[]>;
   log(opts: LogOptions): LogPage;
   /** Resolves a revision (ref or oid) to a single commit, or null if missing. */
   commit(rev: string): Commit | null;

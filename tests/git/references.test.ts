@@ -50,3 +50,28 @@ test("annotated tag has targetOid !== commitOid; lightweight tag and branch have
     repo.free();
   }
 });
+
+test("decorations() groups refs by the commit they point at", () => {
+  const repo = openRepository(fixture.path);
+  try {
+    const map = repo.decorations();
+    const refs = repo.references();
+
+    // Every ref appears under its commitOid bucket.
+    for (const r of refs) {
+      expect(map.get(r.commitOid)!.map((d) => d.name)).toContain(r.name);
+    }
+
+    // main and the annotated tag v2.0 both peel to the head commit, so they
+    // share a bucket; the lightweight tag v1.0 points at an earlier commit.
+    const main = refs.find((r) => r.name === "main")!;
+    expect(map.get(main.commitOid)!.map((d) => d.name).sort()).toEqual(["main", "v2.0"]);
+
+    const v1 = refs.find((r) => r.name === "v1.0")!;
+    expect(map.get(v1.commitOid)!.map((d) => d.name)).toEqual(["v1.0"]);
+
+    expect(map.has("c".repeat(40))).toBe(false);
+  } finally {
+    repo.free();
+  }
+});

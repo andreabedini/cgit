@@ -13,7 +13,7 @@ import { BlobPage } from "./views/default/BlobPage";
 import { CommitPage } from "./views/default/CommitPage";
 import { DiffPage } from "./views/default/DiffPage";
 import { TreePage } from "./views/default/TreePage";
-import { buildDecorationMap, useRepository } from "./middlewares";
+import { useRepository } from "./middlewares";
 import { ErrorPage } from "./views/default/ErrorPage";
 import { LogPage } from "./views/default/LogPage";
 import { renderer, repoLayout } from "./views/default/renderer";
@@ -88,7 +88,7 @@ export function createApp() {
     const aboutHtml = readme
       ? await highlightBlob(new TextDecoder().decode(readme), "README.md", readme.length)
       : undefined;
-    const decorations = buildDecorationMap(repo.references());
+    const decorations = repo.decorations();
 
     return c.render(
       <SummaryPage
@@ -114,7 +114,7 @@ export function createApp() {
     const offset = Math.max(0, Number(c.req.query("ofs") ?? 0) | 0);
     const limit = c.env.CGIT_LOG_PAGE_SIZE;
     const page = repo.log({ ref, offset, limit });
-    const decorations = buildDecorationMap(repo.references());
+    const decorations = repo.decorations();
 
     return c.render(
       <LogPage
@@ -135,7 +135,7 @@ export function createApp() {
     const disc = c.get("disc");
     const commit = repo.commit(c.req.param("rev"));
     if (!commit) throw notFound(`Commit not found: ${c.req.param("rev")}`);
-    const refs = buildDecorationMap(repo.references()).get(commit.oid) ?? [];
+    const refs = repo.decorations().get(commit.oid) ?? [];
     return c.render(<CommitPage name={disc.name} commit={commit} refs={refs} now={new Date()} />);
   });
 

@@ -1,4 +1,3 @@
-import type { Reference } from "./git/facade";
 import { factory } from "./app/env";
 import { findRepo, openRepository } from "./git";
 
@@ -25,14 +24,3 @@ export const useRepository = factory.createMiddleware(async (c, next) => {
     repo.free();
   }
 });
-
-// Group refs by the commit they point at, for decorating log rows.
-export function buildDecorationMap(refs: Reference[]): Map<string, Reference[]> {
-  const map = new Map<string, Reference[]>();
-  for (const ref of refs) {
-    const list = map.get(ref.commitOid) ?? [];
-    list.push(ref);
-    map.set(ref.commitOid, list);
-  }
-  return map;
-}
